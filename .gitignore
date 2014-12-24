@@ -1,0 +1,12 @@
+# ignore all .sqlite3 files
+# -------------------------
+*.sqlite3
+
+# ingore all compiled python files
+# --------------------------------
+*.pyc
+
+# ignore all . (dot) files except .gitignore
+# ------------------------
+.*
+!.gitignore
