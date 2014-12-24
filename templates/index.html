@@ -1,28 +1,7 @@
-{% load staticfiles %}
+{% extends 'base.html' %}
 
-<!DOCTYPE html>
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <script type="text/javascript" src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/kickstart.js' %}"></script>
-    <link rel="stylesheet" type="text/css" href="{% static "css/kickstart.css" %}"/>
-    <link rel="stylesheet" type="text/css" href="{% static "css/common-styles.css" %}"/>
-    <title>{% block title %}{% endblock %}</title>
-</head>
-<body>
-    <div id="wrapper">
-        <div id="header">
+{% block title %}Home | Twitter Sentiment Analysis{% endblock %}
+{% block header %}{% endblock %}
+{% block content %}
 
-        </div>
-
-        <div id="content">
-
-        </div>
-
-        <div id="footer">
-
-        </div>
-    </div>
-</body>
-</html>
+{% endblock %}
