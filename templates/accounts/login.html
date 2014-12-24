@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Login | Twitter Sentiment Analysis{% endblock %}
+
+{% block header %}{{ block.super }}{% endblock %}
+
+{% block content %}
+    <div id="form">
+        <form action="." method="post">
+            {% csrf_token %}
+            <fieldset>
+                <legend>Login:</legend>
+                <div class="form-field">
+                    {{ form.username.label_tag }}<br/>
+                    {% if form.username.errors %}
+                        {{ form.username.errors }}
+                    {% endif %}
+                    {{ form.username }}
+                </div>
+
+                <div class="form-field">
+                    {{ form.password.label_tag }}<br/>
+                    {% if form.password.errors %}
+                        {{ form.password.errors }}
+                    {% endif %}
+                    {{ form.password }}
+                </div>
+
+                <div class="form-field">
+                    <input name="login" value="Login" type="submit"/>
+                </div>
+
+                {% if notice %}
+                    <div class="notice {{ type }} center">
+                        {% if type == 'success' %}
+                            <i class="icon-ok icon-large"></i>
+                        {% elif type == 'warning' %}
+                            <i class="icon-warning-sign icon-large"></i>
+                        {% else %}
+                            <i class="icon-remove-sign icon-large"></i>
+                        {% endif %}
+                        {{ notice }}<a href="#close" class="icon-remove"></a>
+                    </div>
+                {% endif %}
+
+            </fieldset>
+        </form>
+    </div>
+{% endblock %}
