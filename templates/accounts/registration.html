@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Registration | Twitter Sentiment Analysis{% endblock %}
+
+{% block content %}
+    <div id="registration-form">
+        <form action="." method="post">
+            {% csrf_token %}
+            <fieldset>
+                <legend>Registration:</legend>
+                <div class="form-field">
+                    {{ form.username.label_tag }}<br/>
+                    {% if form.username.errors %}
+                        {{ form.username.errors }}
+                    {% endif %}
+                    {{ form.username}}
+                </div>
+
+                <div class="form-field">
+                    {{ form.email.label_tag }}<br/>
+                    {% if form.email.errors %}
+                        {{ form.email.errors }}
+                    {% endif %}
+                    {{ form.email }}
+                </div>
+
+                <div class="form-field">
+                    {{ form.password1.label_tag }}<br/>
+                    {% if form.password1.errors %}
+                        {{ form.password1.errors }}
+                    {% endif %}
+                    {{ form.password1 }}
+                </div>
+
+                <div class="form-field">
+                    {{ form.password2.label_tag }}<br/>
+                    {% if form.password2.errors %}
+                        {{ form.password2.errors }}
+                    {% endif %}
+                    {{ form.password2 }}
+                </div>
+
+                <div class="form-field">
+                    <input type="submit" name="submit" value="Sign Up"/>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+{% endblock %}
