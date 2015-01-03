@@ -6,8 +6,11 @@ from django.contrib.auth.decorators import login_required
 from forms import NewUserForm, LoginForm
 
 
-def new_user(request):
-    context = dict()
+def registration(request):
+    if request.user.is_authenticated():
+        return redirect(to='profile', permanent=True)
+
+    context = dict(active_tab='registration')
     if request.method == 'POST':
         form = NewUserForm(request.POST)
         if form.is_valid():
@@ -21,8 +24,11 @@ def new_user(request):
     return render(request, 'accounts/registration.html', context)
 
 
-def process_login(request):
-    context = dict()
+def _login(request):
+    if request.user.is_authenticated():
+        return redirect(to='profile', permanent=True)
+
+    context = dict(active_tab='login')
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -55,12 +61,12 @@ def process_login(request):
 
 
 @login_required
-def show_profile(request):
-    context = dict()
+def profile(request):
+    context = dict(active_tab='profile')
     return render(request, 'accounts/profile.html', context)
 
 
 @login_required
-def process_logout(request):
+def _logout(request):
     logout(request)
     return redirect(to='home', permanent=True)

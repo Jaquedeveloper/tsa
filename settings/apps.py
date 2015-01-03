@@ -12,5 +12,5 @@ INSTALLED_APPS = (
 # Users applications
 
 INSTALLED_APPS += (
-
+    'tsa',
 )
