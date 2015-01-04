@@ -5,7 +5,36 @@
 {% block header %}{{ block.super }}{% endblock %}
 
 {% block content %}
-    <div id="">
+
+    <div id="sidebar">
+        <ul class="tabs left">
+            <li><a href="#tab1"><i class="fa fa-search-plus">&nbsp;</i>New Query</a></li>
+            <li><a href="#tab2"><i class="fa fa-list-alt">&nbsp;</i>My Queries</a></li>
+        </ul>
+
+        <div id="tab1" class="tab-content">
+            <form action="" onsubmit="return false">
+                <div>
+                    <div><label for="title">Title:</label></div>
+                    <input class="full-width" type="text" name="title" id="title" />
+                </div>
+                <div class="query-form-row">
+                    <div><label for="query">Query:</label></div>
+                    <textarea id="query" rows="4"></textarea>
+                </div>
+                <div class="query-form-row">
+                    <button id="btn-create-query"><i class="fa fa-plus">&nbsp;</i>Create Query</button>
+                    {% csrf_token %}
+                </div>
+            </form>
+        </div>
+
+        <div id="tab2" class="tab-content">Tab2</div>
+    </div>
+
+
+
+    <div id="dashboard">
 
     </div>
 {% endblock %}
