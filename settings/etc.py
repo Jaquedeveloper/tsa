@@ -19,7 +19,5 @@ LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 
-USE_TZ = True
-
 CSRF_COOKIE_AGE = 60 * 60 # one hour
 

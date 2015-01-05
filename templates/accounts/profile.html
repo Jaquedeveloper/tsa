@@ -16,20 +16,35 @@
             <form action="" onsubmit="return false">
                 <div>
                     <div><label for="title">Title:</label></div>
-                    <input class="full-width" type="text" name="title" id="title" />
+                    <input class="full-width" type="text" name="title" id="title"/>
                 </div>
                 <div class="query-form-row">
-                    <div><label for="query">Query:</label></div>
-                    <textarea id="query" rows="4"></textarea>
+                    <div><label for="body">Body:</label></div>
+                    <textarea id="body" rows="4"></textarea>
                 </div>
                 <div class="query-form-row">
-                    <button id="btn-create-query"><i class="fa fa-plus">&nbsp;</i>Create Query</button>
+                    <div><label for="access">Access:</label></div>
+                    <select id="access" class="full-width">
+                        <option selected="selected" value="True">Public</option>
+                        <option value="False">Private</option>
+                    </select>
+                </div>
+                <div class="query-form-row">
+
+                    <button class="full-width" id="btn-create-query">
+                        <i class="fa fa-plus">&nbsp;</i>Create Query
+                    </button>
                     {% csrf_token %}
                 </div>
             </form>
+            <div id="status-message" class="full-width"></div>
         </div>
 
-        <div id="tab2" class="tab-content">Tab2</div>
+        <div id="tab2" class="tab-content">
+            <div id="queries">
+
+            </div>
+        </div>
     </div>
 
 
