@@ -15,7 +15,7 @@ virtualenv .<br/>
 source bin/activate<br/>
 git clone https://github.com/joker-ace/tsa.git<br/>
 pip install -r tsa/requirements.txt<br/>
-deactivate
+deactivate<br/>
 mkdir /webapps/tsa/logs<br/>
 touch /webapps/tsa/logs/gunicorn_supervisor.log<br/>
 chmod +x /webapps/tsa/tsa/install/install.sh<br/>
