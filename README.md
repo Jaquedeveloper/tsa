@@ -18,5 +18,6 @@ pip install -r tsa/requirements.txt<br/>
 deactivate<br/>
 mkdir /webapps/tsa/logs<br/>
 touch /webapps/tsa/logs/gunicorn_supervisor.log<br/>
-chmod +x /webapps/tsa/tsa/install/install.sh<br/>
-./webapps/tsa/tsa/install/install.sh<br/>
+chmod 777 /webapps/tsa/tsa/install/install.sh<br/>
+exit<br/>
+/webapps/tsa/tsa/install/install.sh<br/>
