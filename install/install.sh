@@ -6,8 +6,8 @@ chmod +x /webapps/tsa/bin/gunicorn_start.sh
 cp /webapps/tsa/tsa/install/tsa.supervisor.conf /etc/supervisor/conf.d/tsa.supervisor.conf
 sudo supervisorctl reread
 sudo supervisorctl update
-status tsa
-
+sudo supervisorctl restart tsa
 cp /webapps/tsa/tsa/install/tsa.nginx.conf /etc/nginx/sites-available/tsa.nginx.conf
 sudo ln -s /etc/nginx/sites-available/tsa.nginx.conf /etc/nginx/sites-enabled/tsa.nginx.conf
+sudo rm /etc/nginx/sites-enabled/default
 sudo service nginx restart
