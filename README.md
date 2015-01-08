@@ -18,7 +18,7 @@ git clone https://github.com/joker-ace/tsa.git<br/>
 pip install -r tsa/requirements.txt<br/>
 python tsa/manage.py migrate<br/>
 python tsa/manage.py syncdb<br/>
-python tsa/manage.py collectstatic<br/>
+python tsa/manage.py collectstatic --noinput<br/>
 deactivate<br/>
 mkdir /webapps/tsa/logs<br/>
 touch /webapps/tsa/logs/gunicorn_supervisor.log<br/>
