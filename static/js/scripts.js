@@ -1,6 +1,5 @@
 var csrf_token = null;
 var host = 'http://' + document.domain + ':8000';
-var queryHtmlTemplate = '<div><span><i class="fa {public} small-font" title="Public query">&nbsp;</i>{title}</span><div class="query-controls"><a href="#">Edit</a> <a href="#">Delete</a></div></div><div class="query-body"><div>{body}</div><div class="query-date">Added: {date}</div></div>';
 
 function getMyQueries() {
     var request_path = host + '/queries/my/';
@@ -18,29 +17,67 @@ function getMyQueries() {
 function renderQueries(queries) {
     var div = $("#queries");
     queries.forEach(function (query) {
-        renderQuery(query, div);
+        renderQuery(query, div, true);
     });
+    $('.delete-query').click(lnkDeleteQueryHandler);
 }
 
-function renderQuery(query, container) {
+function renderQuery(query, container, append) {
     var div = $('<div>', {
-        "class": "query"
-    });
-    var html = queryHtmlTemplate
-        .replace('{title}', query.title)
-        .replace('{body}', query.body)
-        .replace('{date}', query.date);
+        "class": "query",
+        'id': 'q' + query.id
+    }).append(
+        $('<div>', {}).append($('<span>', {
+                'class': 'txt-a-justify',
+                'text': query.title
+            })
+        ).prepend(
+            $('<i>', {
+                'class': 'small-font fa ' + (query.is_public ? "fa-users" : "fa-lock"),
+                'html': '&nbsp;'
+            })
+        ).append(
+            $('<div>', {
+                'class': 'query-controls'
+            }).append(
+                $('<a>', {
+                    'href': "#",
+                    'class': 'edit-query',
+                    'id': query.id,
+                    'text': 'Edit '
+                })
+            ).append(
+                $('<a>', {
+                    'href': "#",
+                    'class': 'delete-query',
+                    'id': query.id,
+                    'text': 'Delete'
+                })
+            )
+        )
+    );
 
-    var access = '';
-    if (query.is_public) {
-        access = 'fa-users';
+    div.append(
+        $('<div>', {
+            'class': 'query-body'
+        }).append(
+            $('<div>', {
+                'text': query.body
+            })
+        ).append(
+            $('<div>', {
+                'class': 'query-date',
+                'text': 'Added: ' + query.date
+            })
+        )
+    );
+
+
+    if (append) {
+        container.append(div);
     } else {
-        access = 'fa-lock';
+        container.prepend(div);
     }
-
-    html = html.replace('{public}', access);
-    div.html(html);
-    container.append(div);
 }
 
 function notification(msg, type, id, close_button) {
@@ -84,15 +121,34 @@ function btnCreateQueryClickHandler() {
             if (data.status == 'success') {
                 $('#title').prop("value", "");
                 $('#body').prop("value", "");
+                renderQuery(data.query, $("#queries"), false);
             }
         }
     );
 }
 
+function lnkDeleteQueryHandler() {
+    if (!confirm('Are you sure?')) return false;
+    var request_path = host + '/queries/delete/';
+    var id = $(this).prop('id');
+    $.post(
+        request_path,
+        {
+            csrfmiddlewaretoken: csrf_token,
+            id: id
+        },
+        function (response) {
+            console.log(response);
+            if (response.status == 'success') {
+                $("#q" + id).remove();
+            }
+        }
+    );
+
+}
+
 $(document).ready(function () {
     csrf_token = $('input[name="csrfmiddlewaretoken"]').val();
     $('#btn-create-query').click(btnCreateQueryClickHandler);
-
-
     getMyQueries();
 });

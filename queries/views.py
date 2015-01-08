@@ -1,11 +1,12 @@
+from django.contrib.auth.decorators import login_required
+
 from tsa.utils import json_response
 from queries.forms import QueryForm
 from tsa.models import Query
 
-def create_query(request):
-    if not request.user.is_authenticated():
-        return json_response({'status': 'error', 'message': 'Please, login first'})
 
+@login_required
+def create_query(request):
     if request.method != 'POST':
         return json_response({'status': 'error', 'message': 'Invalid request type'})
 
@@ -23,10 +24,23 @@ def create_query(request):
     return json_response({'status': 'error', 'message': 'Fill required fields'})
 
 
+@login_required
 def get_my_queries(request):
-    if not request.user.is_authenticated():
-        return json_response({'status': 'error', 'message': 'Please, login first'})
-
     my_queries = Query.objects.filter(user=request.user).order_by('-date')
     queries = [q.to_dict() for q in my_queries]
-    return json_response({'queries':queries})
+    return json_response({'queries': queries})
+
+
+@login_required
+def delete_query(request):
+    try:
+        id = int(request.POST.get('id'))
+    except:
+        id = -1
+
+    query = Query.objects.filter(user=request.user, pk=id)
+    if query:
+        query.delete()
+        return json_response({'status': 'success'})
+
+    return json_response({'status': 'error'})
