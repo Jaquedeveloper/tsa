@@ -1,8 +1,8 @@
 #!/bin/bash
  
-NAME="tsa"                                  			# Name of the application
-DJANGODIR=/webapps/tsa/dveri         			# Django project directory
-SOCKFILE=/webapps/tsa/run/gunicorn.sock  # we will communicte using this unix socket
+NAME="tsa"                              # Name of the application
+DJANGODIR=/webapps/tsa/tsa              # Django project directory
+SOCKFILE=/webapps/tsa/run/gunicorn.sock # we will communicte using this unix socket
 LOGFILE=/webapps/tsa/logs/gunicorn.log
 USER=tsa 			                                        # the user to run as
 GROUP=webapps                                     			# the group to run as
