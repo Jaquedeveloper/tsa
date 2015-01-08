@@ -5,7 +5,7 @@ Twitter live capture and Sentiment Analysis
 
 Installation
 
-apt-get git supervisor nginx nano python-virtualenv
+apt-get git supervisor nginx nano python-virtualenv<br/>
 sudo groupadd --system webapps
 sudo mkdir -p /webapps/tsa
 sudo useradd --system --gid webapps --shell /bin/bash --home /webapps/tsa tsa
