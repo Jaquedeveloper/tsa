@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
@@ -56,7 +55,7 @@ def _login(request):
             context['notice'] = 'You have successfully registered'
             context['type'] = 'success'
 
-        context['form'] = AuthenticationForm()
+        context['form'] = LoginForm()
     return render(request, 'accounts/login.html', context)
 
 

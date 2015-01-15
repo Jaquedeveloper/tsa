@@ -67,7 +67,7 @@ function renderQuery(query, container, append) {
         ).append(
             $('<div>', {
                 'class': 'query-date',
-                'text': 'Added: ' + query.date
+                'text': 'Added: ' + query['date']
             })
         )
     );
@@ -106,14 +106,37 @@ function notification(msg, type, id, close_button) {
 
 function btnCreateQueryClickHandler() {
     var request_path = host + "/queries/new/";
+    var request_data = {
+        csrfmiddlewaretoken: csrf_token,
+        title: $("#title").val(),
+        all_words: $('#all_words').val(),
+        phrase: $('#phrase').val(),
+        any_word: $('#any_word').val(),
+        none_of: $("#none_of").val(),
+        hashtags: $("#hashtags").val(),
+        users: $("#users").val(),
+        date_from: $("#df").val(),
+        date_to: $("#dt").val(),
+        is_public: $('#is_public').val()
+    };
+
+    if (request_data.title.length == 0) {
+        $("#title").addClass('error');
+        $('label[for="title"]').addClass('error');
+        return false;
+    }
+
+    if (
+        request_data.all_words.length == 0 && request_data.phrase.length == 0 && request_data.any_word.length == 0 &&
+        request_data.none_of.length == 0 && request_data.hashtags.length == 0 && request_data.users.length == 0 &&
+        request_data.date_from.length == 0 && request_data.date_to.length == 0
+    ) {
+        return false;
+    }
+
     $.post(
         request_path,
-        {
-            csrfmiddlewaretoken: csrf_token,
-            title: $("#title").val(),
-            body: $('#body').val(),
-            is_public: $('#access').val()
-        },
+        request_data,
         function (data) {
             var message = notification(data.message, data.status, "3000msNotice", false);
             $("#status-message").empty().append(message);

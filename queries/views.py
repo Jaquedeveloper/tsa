@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 
 from tsa.utils import json_response
 from queries.forms import QueryForm
-from .models import Query
+from queries.models import Query
 
 
 @login_required
@@ -12,7 +12,7 @@ def create_query(request):
 
     form = QueryForm(request.POST)
     if form.is_valid():
-        query = form.save(commit=False)
+        query = Query(**form.cleaned_data)
         query.user = request.user
         query.save()
         return json_response({
