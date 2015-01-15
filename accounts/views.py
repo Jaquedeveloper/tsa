@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
 from forms import NewUserForm, LoginForm
-
+from queries.forms import QueryForm
 
 def registration(request):
     if request.user.is_authenticated():
@@ -62,7 +62,7 @@ def _login(request):
 
 @login_required
 def profile(request):
-    context = dict(active_tab='profile')
+    context = dict(active_tab='profile', query_form=QueryForm())
     return render(request, 'accounts/profile.html', context)
 
 

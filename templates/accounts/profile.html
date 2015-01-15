@@ -5,50 +5,40 @@
 {% block header %}{{ block.super }}{% endblock %}
 
 {% block content %}
-
-    <div id="sidebar">
-        <ul class="tabs left">
-            <li><a href="#tab1"><i class="fa fa-search-plus">&nbsp;</i>New Query</a></li>
-            <li><a href="#tab2"><i class="fa fa-list-alt">&nbsp;</i>My Queries</a></li>
+    <div id="dashboard">
+        <ul class="tabs center">
+            <li><a href="#new_query"><i class="fa fa-search-plus">&nbsp;</i>New Query</a></li>
+            <li><a href="#my_queries"><i class="fa fa-list-alt">&nbsp;</i>My Queries</a></li>
         </ul>
 
-        <div id="tab1" class="tab-content">
+        <div id="new_query" class="tab-content form">
             <form action="" onsubmit="return false">
-                <div>
-                    <div><label for="title">Title:</label></div>
-                    <input class="full-width" type="text" name="title" id="title"/>
-                </div>
-                <div class="query-form-row">
-                    <div><label for="body">Body:</label></div>
-                    <textarea id="body" rows="4"></textarea>
-                </div>
-                <div class="query-form-row">
-                    <div><label for="access">Access:</label></div>
-                    <select id="access" class="full-width">
-                        <option value="True">Public</option>
-                        <option selected="selected" value="False">Private</option>
-                    </select>
-                </div>
-                <div class="query-form-row">
-
-                    <button class="full-width" id="btn-create-query">
-                        <i class="fa fa-plus">&nbsp;</i>Create Query
-                    </button>
-                    {% csrf_token %}
-                </div>
+                <table>
+                    {{ query_form.as_table }}
+                    <tr>
+                        <td colspan="2">
+                            <button class="full-width square" id="btn-create-query">Create</button>
+                            {% csrf_token %}
+                        </td>
+                    </tr>
+                </table>
             </form>
             <div id="status-message" class="full-width"></div>
         </div>
 
-        <div id="tab2" class="tab-content">
-            <div id="queries">
+        <div id="my_queries" class="tab-content">
 
-            </div>
         </div>
     </div>
 
-    <div id="dashboard">
+    <script type="text/javascript">
+        $("#df").datepicker({
+            inline: true
+        });
 
-    </div>
+        $("#dt").datepicker({
+            inline: true
+        });
 
+    </script>
 {% endblock %}

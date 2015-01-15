@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 
 from tsa.utils import json_response
 from queries.forms import QueryForm
-from tsa.models import Query
+from .models import Query
 
 
 @login_required
