@@ -14,6 +14,7 @@ def create_query(request):
     if form.is_valid():
         query = Query(**form.cleaned_data)
         query.user = request.user
+        query.is_public = form.cleaned_data['is_public'] == u'True'
         query.save()
         return json_response({
             'status': 'success',

@@ -22,6 +22,60 @@ function renderQueries(queries) {
     $('.delete-query').click(lnkDeleteQueryHandler);
 }
 
+function createQueryDisplayBody(query) {
+    var div = $('<div>');
+
+    if (query.all_words) {
+        div.append($('<p>', {
+            'text': 'All these words: ' + query.all_words
+        }))
+    }
+
+    if (query.phrase) {
+        div.append($('<p>', {
+            'text': 'This phrase: ' + query.phrase
+        }))
+    }
+
+    if (query.any_word) {
+        div.append($('<p>', {
+            'text': 'Any of these words: ' + query.any_word
+        }))
+    }
+
+    if (query.none_of) {
+        div.append($('<p>', {
+            'text': 'None of these words: ' + query.none_of
+        }))
+    }
+
+    if (query.hashtags) {
+        div.append($('<p>', {
+            'text': 'These hashtags: ' + query.hashtags
+        }))
+    }
+
+    if (query.users) {
+        div.append($('<p>', {
+            'text': 'From these users: ' + query.users
+        }))
+    }
+
+    if (query.date_from) {
+        div.append($('<p>', {
+            'text': 'From this date: ' + query.date_from
+        }))
+    }
+
+    if (query.date_to) {
+        div.append($('<p>', {
+            'text': 'To this date: ' + query.date_to
+        }))
+    }
+
+    return div;
+}
+
 function renderQuery(query, container, append) {
     var div = $('<div>', {
         "class": "query",
@@ -42,10 +96,21 @@ function renderQuery(query, container, append) {
             }).append(
                 $('<a>', {
                     'href': "#",
+                    'class': 'run-query',
+                    'id': query.id,
+                    'text': 'Run'
+                })
+            ).append(
+                $('<span>', {'html': '&nbsp;'})
+            ).append(
+                $('<a>', {
+                    'href': "#",
                     'class': 'edit-query',
                     'id': query.id,
-                    'text': 'Edit '
+                    'text': 'Edit'
                 })
+            ).append(
+                $('<span>', {'html': '&nbsp;'})
             ).append(
                 $('<a>', {
                     'href': "#",
@@ -61,9 +126,7 @@ function renderQuery(query, container, append) {
         $('<div>', {
             'class': 'query-body'
         }).append(
-            $('<div>', {
-                'text': query.body
-            })
+            createQueryDisplayBody(query)
         ).append(
             $('<div>', {
                 'class': 'query-date',
@@ -72,13 +135,13 @@ function renderQuery(query, container, append) {
         )
     );
 
-
     if (append) {
         container.append(div);
     } else {
         container.prepend(div);
     }
 }
+
 
 function notification(msg, type, id, close_button) {
     var notice = $('<div>', {
@@ -142,9 +205,17 @@ function btnCreateQueryClickHandler() {
             $("#status-message").empty().append(message);
             message.delay(3000).fadeOut();
             if (data.status == 'success') {
-                $('#title').prop("value", "");
-                $('#body').prop("value", "");
-                renderQuery(data.query, $("#queries"), false);
+                $('#title').val("");
+                $('#all_words').val("");
+                $('#phrase').val("");
+                $('#any_word').val("");
+                $("#none_of").val("");
+                $("#hashtags").val("");
+                $("#users").val("");
+                $("#df").val("");
+                $("#dt").val("");
+                $('#is_public').val("");
+                renderQuery(data['query'], $("#queries"), false);
             }
         }
     );
@@ -161,7 +232,6 @@ function lnkDeleteQueryHandler() {
             id: id
         },
         function (response) {
-            console.log(response);
             if (response.status == 'success') {
                 $("#q" + id).remove();
             }

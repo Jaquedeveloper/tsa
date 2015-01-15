@@ -92,11 +92,6 @@ textarea#body {
     height: auto;
 }
 
-#queries {
-    height: 400px;
-    overflow-y: auto;
-}
-
 .small-font {
     font-size: 12px;
 }
@@ -106,9 +101,11 @@ textarea#body {
 }
 
 .query {
-    margin-top: 10px;
+    width: 33%;
+    float: left;
+    margin: 1px;
     border: 1px solid #dddddd;
-    padding: 2px;
+    padding: 5px;
 }
 
 .query-body {

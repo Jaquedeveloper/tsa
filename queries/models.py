@@ -20,3 +20,19 @@ class Query(models.Model):
 
     def __unicode__(self):
         return self.title
+
+    def to_dict(self):
+        return dict(
+            id=self.pk,
+            title=self.title,
+            date=self.date.strftime("%Y-%m-%d %H:%M:%S"),
+            is_public=self.is_public,
+            all_words=self.all_words,
+            phrase=self.phrase,
+            any_word=self.any_word,
+            none_of=self.none_of,
+            hashtags=self.hashtags,
+            users=self.users,
+            date_from=self.date_from,
+            date_to=self.date_to
+        )
