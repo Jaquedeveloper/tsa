@@ -33,6 +33,51 @@ class Query(models.Model):
             none_of=self.none_of,
             hashtags=self.hashtags,
             users=self.users,
-            date_from=self.date_from,
-            date_to=self.date_to
+            date_from=str(self.date_from) if self.date_from else '',
+            date_to=str(self.date_to) if self.date_to else '',
+            search_query=self.to_search_query_string()
         )
+
+    def to_search_query_string(self):
+
+        query = ''
+
+        if self.all_words:
+            query = self.all_words
+
+        if self.phrase:
+            if query:
+                query += ' '
+            query += '"' + self.phrase + '"'
+
+        if self.any_word:
+            if query:
+                query += ' '
+            query += " OR ".join(self.any_word.split())
+
+        if self.none_of:
+            if query:
+                query += ' '
+            query += " ".join(('-' + word for word in self.none_of.split()))
+
+        if self.hashtags:
+            if query:
+                query += ' '
+            query += " ".join(('#' + word for word in self.hashtags.split()))
+
+        if self.users:
+            if query:
+                query += ' '
+            query += " OR ".join(('from: ' + user for user in self.users.split()))
+
+        if self.date_from:
+            if query:
+                query += ' '
+            query += 'since:' + str(self.date_from)
+
+        if self.date_to:
+            if query:
+                query += ' '
+            query += 'until:' + str(self.date_to)
+
+        return query

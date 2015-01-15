@@ -146,3 +146,7 @@ textarea#body {
     background-color: #dddddd;
     text-align: center;
 }
+
+.w35pc {
+    width: 35%;
+}

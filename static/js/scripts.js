@@ -23,57 +23,97 @@ function renderQueries(queries) {
 }
 
 function createQueryDisplayBody(query) {
-    var div = $('<div>');
+    var table = $('<table>');
 
     if (query.all_words) {
-        div.append($('<p>', {
-            'text': 'All these words: ' + query.all_words
-        }))
+        table.append(
+            $('<tr>').append(
+                $('<td>', {'text': 'All of these words:', 'class': 'w35pc'})
+            ).append(
+                $('<td>', {'text': query.all_words})
+            )
+        )
     }
 
     if (query.phrase) {
-        div.append($('<p>', {
-            'text': 'This phrase: ' + query.phrase
-        }))
+        table.append(
+            $('<tr>').append(
+                $('<td>', {'text': 'This phrase:', 'class': 'w35pc'})
+            ).append(
+                $('<td>', {'text': query.phrase})
+            )
+        )
     }
 
     if (query.any_word) {
-        div.append($('<p>', {
-            'text': 'Any of these words: ' + query.any_word
-        }))
+        table.append(
+            $('<tr>').append(
+                $('<td>', {'text': 'Any of these words:', 'class': 'w35pc'})
+            ).append(
+                $('<td>', {'text': query.any_word})
+            )
+        )
     }
 
     if (query.none_of) {
-        div.append($('<p>', {
-            'text': 'None of these words: ' + query.none_of
-        }))
+        table.append(
+            $('<tr>').append(
+                $('<td>', {'text': 'None of these words:', 'class': 'w35pc'})
+            ).append(
+                $('<td>', {'text': query.none_of})
+            )
+        )
     }
 
     if (query.hashtags) {
-        div.append($('<p>', {
-            'text': 'These hashtags: ' + query.hashtags
-        }))
+        table.append(
+            $('<tr>').append(
+                $('<td>', {'text': 'These hashtags:', 'class': 'w35pc'})
+            ).append(
+                $('<td>', {'text': query.hashtags})
+            )
+        )
     }
 
     if (query.users) {
-        div.append($('<p>', {
-            'text': 'From these users: ' + query.users
-        }))
+        table.append(
+            $('<tr>').append(
+                $('<td>', {'text': 'From these users:', 'class': 'w35pc'})
+            ).append(
+                $('<td>', {'text': query.users})
+            )
+        )
     }
 
     if (query.date_from) {
-        div.append($('<p>', {
-            'text': 'From this date: ' + query.date_from
-        }))
+        table.append(
+            $('<tr>').append(
+                $('<td>', {'text': 'From this date:', 'class': 'w35pc'})
+            ).append(
+                $('<td>', {'text': query.date_from})
+            )
+        )
     }
 
     if (query.date_to) {
-        div.append($('<p>', {
-            'text': 'To this date: ' + query.date_to
-        }))
+        table.append(
+            $('<tr>').append(
+                $('<td>', {'text': 'To this date:', 'class': 'w35pc'})
+            ).append(
+                $('<td>', {'text': query.date_to})
+            )
+        )
     }
 
-    return div;
+    table.append(
+        $('<tr>').append(
+            $('<td>', {'text': 'Search query:', 'class': 'w35pc'})
+        ).append(
+            $('<td>', {'text': query.search_query})
+        )
+    );
+
+    return table;
 }
 
 function renderQuery(query, container, append) {
@@ -98,7 +138,7 @@ function renderQuery(query, container, append) {
                     'href': "#",
                     'class': 'run-query',
                     'id': query.id,
-                    'text': 'Run'
+                    'html': '<i class="fa fa-play">&nbsp;</i>Run'
                 })
             ).append(
                 $('<span>', {'html': '&nbsp;'})
@@ -107,7 +147,7 @@ function renderQuery(query, container, append) {
                     'href': "#",
                     'class': 'edit-query',
                     'id': query.id,
-                    'text': 'Edit'
+                    'html': '<i class="fa fa-pencil">&nbsp;</i>Edit'
                 })
             ).append(
                 $('<span>', {'html': '&nbsp;'})
@@ -116,7 +156,7 @@ function renderQuery(query, container, append) {
                     'href': "#",
                     'class': 'delete-query',
                     'id': query.id,
-                    'text': 'Delete'
+                    'html': '<i class="fa fa-trash">&nbsp;</i>Delete'
                 })
             )
         )
