@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-
+from accounts.models import Account
 from forms import NewUserForm, LoginForm
 from queries.forms import QueryForm
 
@@ -13,7 +13,9 @@ def registration(request):
     if request.method == 'POST':
         form = NewUserForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            user.account = Account()
+            user.account.save()
             request.session['registration_completed'] = True
             return redirect(to='login', permanent=True)
         else:
