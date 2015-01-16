@@ -13,5 +13,6 @@ INSTALLED_APPS = (
 
 INSTALLED_APPS += (
     'tsa',
-    'queries'
+    'queries',
+    'accounts'
 )
