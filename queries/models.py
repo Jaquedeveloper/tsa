@@ -67,7 +67,7 @@ class Query(models.Model):
         if self.users:
             if query:
                 query += ' '
-            query += " OR ".join(('from: ' + user for user in self.users.split()))
+            query += " OR ".join(('from:' + user for user in self.users.split()))
 
         if self.date_from:
             if query:

@@ -19,7 +19,6 @@ function renderQueries(queries) {
     queries.forEach(function (query) {
         renderQuery(query, div, true);
     });
-    $('.delete-query').click(lnkDeleteQueryHandler);
 }
 
 function createQueryDisplayBody(query) {
@@ -139,7 +138,7 @@ function renderQuery(query, container, append) {
                     'class': 'run-query',
                     'id': query.id,
                     'html': '<i class="fa fa-play">&nbsp;</i>Run'
-                })
+                }).click(lnkRunQueryClickHandler)
             ).append(
                 $('<span>', {'html': '&nbsp;'})
             ).append(
@@ -157,7 +156,7 @@ function renderQuery(query, container, append) {
                     'class': 'delete-query',
                     'id': query.id,
                     'html': '<i class="fa fa-trash">&nbsp;</i>Delete'
-                })
+                }).click(lnkDeleteQueryClickHandler)
             )
         )
     );
@@ -261,7 +260,7 @@ function btnCreateQueryClickHandler() {
     );
 }
 
-function lnkDeleteQueryHandler() {
+function lnkDeleteQueryClickHandler() {
     if (!confirm('Are you sure?')) return false;
     var request_path = host + '/queries/delete/';
     var id = $(this).prop('id');
@@ -277,7 +276,25 @@ function lnkDeleteQueryHandler() {
             }
         }
     );
+}
 
+function lnkRunQueryClickHandler() {
+    var id = $(this).prop('id');
+    var request_path = host + '/queries/run/';
+    $.post(
+        request_path,
+        {
+            csrfmiddlewaretoken: csrf_token,
+            query_id: id
+        },
+        function (response) {
+            if (response.status == 'success') {
+
+            } else if (response.status == 'running') {
+
+            }
+        }
+    );
 }
 
 $(document).ready(function () {
