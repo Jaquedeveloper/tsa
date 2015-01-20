@@ -135,6 +135,15 @@ function renderQuery(query, container, append) {
             }).append(
                 $('<a>', {
                     'href': "#",
+                    'class': 'stop-query',
+                    'id': query.id,
+                    'html': '<i class="fa fa-stop">&nbsp;</i>Stop'
+                }).click(lnkStopQueryClickHandler)
+            ).append(
+                $('<span>', {'html': '&nbsp;'})
+            ).append(
+                $('<a>', {
+                    'href': "#",
                     'class': 'run-query',
                     'id': query.id,
                     'html': '<i class="fa fa-play">&nbsp;</i>Run'
@@ -281,6 +290,7 @@ function lnkDeleteQueryClickHandler() {
 function lnkRunQueryClickHandler() {
     var id = $(this).prop('id');
     var request_path = host + '/queries/run/';
+    var linkRun = $(this);
     $.post(
         request_path,
         {
@@ -289,9 +299,27 @@ function lnkRunQueryClickHandler() {
         },
         function (response) {
             if (response.status == 'success') {
+                linkRun.hide();
+                linkRun.parent().find(".stop-query").show();
+            }
+        }
+    );
+}
 
-            } else if (response.status == 'running') {
-
+function lnkStopQueryClickHandler() {
+    var id = $(this).prop('id');
+    var request_path = host + '/queries/stop/';
+    var linkStop = $(this);
+    $.post(
+        request_path,
+        {
+            csrfmiddlewaretoken: csrf_token,
+            query_id: id
+        },
+        function (response) {
+            if (response.status == 'stopped') {
+                linkStop.hide();
+                linkStop.parent().find(".run-query").show();
             }
         }
     );

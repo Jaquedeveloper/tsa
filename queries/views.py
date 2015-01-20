@@ -38,11 +38,11 @@ def get_my_queries(request):
 @login_required
 def delete_query(request):
     try:
-        id = int(request.POST.get('id'))
-    except:
+        query_id = int(request.POST.get('id', ''))
+    except ValueError:
         return json_response({'status': 'error'})
 
-    query = Query.objects.filter(user=request.user, pk=id)
+    query = Query.objects.filter(user=request.user, pk=query_id)
     if query:
         query.delete()
         return json_response({'status': 'success'})
@@ -52,6 +52,9 @@ def delete_query(request):
 
 @login_required
 def run_query(request):
+    if request.session.get('running_task_id'):
+        return json_response({'status': 'already-running-task'})
+
     try:
         query_id = int(request.POST.get('query_id', ''))
     except ValueError:
@@ -62,6 +65,31 @@ def run_query(request):
     except Query.DoesNotExist:
         return json_response({'status': 'error'})
 
+    task_id = tasks.get_tweets.delay(query_id, query.to_search_query_string()).id
+
+    request.session['running_task_id'] = task_id
+    request.session['running_query_id'] = query_id
+    return json_response({'status': 'success'})
+
+
+@login_required
+def stop_query(request):
+    if not request.session.get('running_task_id'):
+        return json_response({'status': 'no-running-query'})
+
+    try:
+        query_id = int(request.POST.get('query_id', ''))
+    except ValueError:
+        return json_response({'status': 'error'})
+
+    try:
+        running_query_id = int(request.session.get('running_query_id', ''))
+    except ValueError:
+        return json_response({'status': 'error'})
+
+    if running_query_id != query_id:
+        json_response({'status': 'error'})
+
     task_id = request.session.get('running_task_id')
     if task_id:
         app.control.revoke(task_id, terminate=True)
@@ -69,12 +97,7 @@ def run_query(request):
         del request.session['running_query_id']
         return json_response({'status': 'stopped'})
 
-    task_id = tasks.get_tweets.delay(query_id, query.to_search_query_string()).id
-
-    request.session['running_task_id'] = task_id
-    request.session['running_query_id'] = query_id
-
-    return json_response({'status': 'running'})
+    return json_response({'status': 'no-running-task'})
 
 
 @login_required

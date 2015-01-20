@@ -1,9 +1,10 @@
 from django.conf.urls import patterns, url
-from queries.views import create_query, get_my_queries, delete_query, run_query, get_query_results
+from queries.views import create_query, get_my_queries, delete_query, run_query, get_query_results, stop_query
 
 
 urlpatterns = patterns(
     '',
+    url(r'^stop/$', stop_query, name='stop_query'),
     url(r'^results/$', get_query_results, name='query_results'),
     url(r'^run/$', run_query, name="run_query"),
     url(r'^delete/$', delete_query, name="delete_query"),

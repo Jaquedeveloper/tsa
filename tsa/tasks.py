@@ -6,6 +6,7 @@ from TwitterAPI import TwitterAPI
 from django.conf import settings
 
 from tsa.models import Tweet
+from queries.models import Query
 from tsa.celery_app import app
 
 
@@ -17,7 +18,7 @@ api = TwitterAPI(
 )
 
 
-@app.task
+@app.task(ignore_result=True)
 def get_tweets(query_id, query_string):
     try:
         count = 100
@@ -38,7 +39,7 @@ def get_tweets(query_id, query_string):
                     if Tweet.objects.filter(tweet_id=t['id']).exists():
                         continue
                     tweet = Tweet()
-                    tweet.query_id = query_id
+                    tweet.query = Query.objects.get(pk=query_id)
                     tweet.text = t['text']
                     tweet.date = t['created_at']
                     hashtags = ' '.join((hashtag['text'] for hashtag in t['entities']['hashtags']))
