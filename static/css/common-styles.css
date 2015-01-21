@@ -183,10 +183,10 @@ textarea#body {
     padding: 3px;
 }
 
-.tweet-id, .tweet-posted-by, .tweet-date {
+.tweet-posted-by, .tweet-date {
     display: inline-block;
     font-size: 12px;
-    width: 32%;
+    width: 50%;
 }
 
 .tweet-date {

@@ -1,5 +1,8 @@
 var csrf_token = null;
 var host = 'http://' + document.domain + ':8000';
+var taskGetResults = null;
+var five_seconds = 5000;
+
 
 function getMyQueries() {
     var request_path = host + '/queries/my/';
@@ -9,6 +12,13 @@ function getMyQueries() {
         function (data) {
             if (data.hasOwnProperty('queries')) {
                 renderQueries(data['queries']);
+            }
+            if (data.running_query_id) {
+                var id = data.running_query_id;
+                // very strange, this way works, but $("a.run-query#" + id) not
+                $("a.run-query[id=" + id + "]").hide();
+                $("a.stop-query#" + id).show();
+                taskGetResults = createTask(getQueryResults, five_seconds, id);
             }
         }
     );
@@ -138,7 +148,7 @@ function renderQuery(query, container, append) {
                     'class': 'stop-query',
                     'id': query.id,
                     'html': '<i class="fa fa-stop">&nbsp;</i>Stop'
-                }).click(lnkStopQueryClickHandler)
+                }).click(lnkStopQueryClickHandler).hide()
             ).append(
                 $('<span>', {'html': '&nbsp;'})
             ).append(
@@ -299,11 +309,70 @@ function lnkRunQueryClickHandler() {
         },
         function (response) {
             if (response.status == 'success') {
+                taskGetResults = createTask(getQueryResults, five_seconds, id);
                 linkRun.hide();
                 linkRun.parent().find(".stop-query").show();
+                $("a[href='#my_dashboard']").click();
             }
         }
     );
+}
+
+function createTask(func, interval, data) {
+    return setInterval(func, interval, data);
+}
+
+function getQueryResults(id) {
+    var request_path = host + '/queries/results/';
+    $.post(
+        request_path,
+        {
+            csrfmiddlewaretoken: csrf_token,
+            query_id: id
+        },
+        function (response) {
+            if (response.status == 'success') {
+                renderTweets(response.tweets);
+            }
+        }
+    );
+}
+
+function renderTweet(tweet, where) {
+    var tweetDiv = $('<div>', {
+        'class': 'tweet'
+    });
+
+    tweetDiv.append(
+        $('<div>', {
+            'class': 'tweet-title'
+        }).append(
+            $('<div>', {
+                'class': 'tweet-posted-by',
+                'text': 'Posted by: '
+            }).append($('<span>', {'class': 'tweet-owner', 'text': tweet.user}))
+        ).append(
+            $('<div>', {
+                'class': 'tweet-date',
+                'text': 'Since: '
+            }).append($('<span>', {'text': tweet.date}))
+        )
+    ).append(
+        $('<div>', {
+            'class': 'tweet-body',
+            'text': tweet.text
+        })
+    );
+
+    where.append(tweetDiv);
+}
+
+function renderTweets(tweets) {
+    var div = $("#tweets");
+    div.empty();
+    tweets.forEach(function (tweet) {
+        renderTweet(tweet, div);
+    });
 }
 
 function lnkStopQueryClickHandler() {
@@ -318,6 +387,7 @@ function lnkStopQueryClickHandler() {
         },
         function (response) {
             if (response.status == 'stopped') {
+                clearInterval(taskGetResults);
                 linkStop.hide();
                 linkStop.parent().find(".run-query").show();
             }
@@ -327,6 +397,4 @@ function lnkStopQueryClickHandler() {
 
 $(document).ready(function () {
     csrf_token = $('input[name="csrfmiddlewaretoken"]').val();
-    $('#btn-create-query').click(btnCreateQueryClickHandler);
-    getMyQueries();
 });

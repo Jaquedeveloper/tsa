@@ -39,34 +39,6 @@
         <div id="my_dashboard" class="tab-content">
             <div id="results">
                 <div id="tweets">
-                    <div class="tweet">
-                        <div class="tweet-title">
-                            <div class="tweet-id">ID: <span>12345678901232323</span></div>
-                            <div class="tweet-posted-by">Posted by:
-                                <span class="tweet-owner">jsmith(John Smith)</span>
-                            </div>
-                            <div class="tweet-date">
-                                Since: <span>2015-01-15 22:50</span>
-                            </div>
-                        </div>
-                        <div class="tweet-body">
-                            This is very important text of the tweet, yeah
-                        </div>
-                    </div>
-                    <div class="tweet">
-                        <div class="tweet-title">
-                            <div class="tweet-id">ID: <span>12345678901232323</span></div>
-                            <div class="tweet-posted-by">Posted by:
-                                <span class="tweet-owner">jsmith(John Smith)</span>
-                            </div>
-                            <div class="tweet-date">
-                                Since: <span>2015-01-15 22:50</span>
-                            </div>
-                        </div>
-                        <div class="tweet-body">
-                            This is very important text of the tweet, yeah
-                        </div>
-                    </div>
                 </div>
                 <div id="statistics">
 
@@ -77,13 +49,21 @@
     </div>
 
     <script type="text/javascript">
-        $("#df").datepicker({
-            inline: true,
-            dateFormat: 'yy-mm-dd'
+
+        $(document).ready(function () {
+            $("#df").datepicker({
+                inline: true,
+                dateFormat: 'yy-mm-dd'
+            });
+            $("#dt").datepicker({
+                inline: true,
+                dateFormat: 'yy-mm-dd'
+            });
+
+
+            $('#btn-create-query').click(btnCreateQueryClickHandler);
+            getMyQueries();
         });
-        $("#dt").datepicker({
-            inline: true,
-            dateFormat: 'yy-mm-dd'
-        });
+
     </script>
 {% endblock %}

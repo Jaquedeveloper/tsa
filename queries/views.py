@@ -32,7 +32,7 @@ def create_query(request):
 def get_my_queries(request):
     my_queries = Query.objects.filter(user=request.user).order_by('-date')
     queries = [q.to_dict() for q in my_queries]
-    return json_response({'queries': queries})
+    return json_response({'queries': queries, 'running_query_id': request.session.get('running_query_id')})
 
 
 @login_required
@@ -106,7 +106,7 @@ def get_query_results(request):
     if not query_id:
         return json_response({'status': 'error'})
 
-    tweets = Tweet.objects.filter(query_id=query_id)
+    tweets = Tweet.objects.filter(query=Query.objects.get(pk=query_id)).order_by('-date')
     tweets = [tweet.to_dict() for tweet in tweets]
 
-    return json_response(tweets)
+    return json_response({'status': 'success', 'tweets': tweets})
