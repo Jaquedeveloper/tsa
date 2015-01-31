@@ -10,6 +10,7 @@ class Tweet(models.Model):
     hashtags = models.CharField(max_length=100, null=True, default=None)
     twitter_user = models.CharField(max_length=100, null=False)
     tweet_id = models.BigIntegerField(null=False, db_index=True)
+    polarity = models.FloatField(null=False)
 
     def __unicode__(self):
         return u'Tweet #' + unicode(self.tweet_id)
@@ -21,5 +22,6 @@ class Tweet(models.Model):
             'date': self.date.strftime('%Y-%m-%d %H:%M:%S'),
             'hashtags': self.hashtags,
             'user': self.twitter_user,
-            'id': self.tweet_id
+            'id': self.tweet_id,
+            'polarity': (self.polarity * 5.0)
         }

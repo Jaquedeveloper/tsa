@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from accounts.models import Account
+from accounts.models import Account, User
 from forms import NewUserForm, LoginForm
 from queries.forms import QueryForm
+from tsa.utils import json_response
+
 
 def registration(request):
     if request.user.is_authenticated():
@@ -71,3 +73,21 @@ def profile(request):
 def _logout(request):
     logout(request)
     return redirect(to='home', permanent=True)
+
+
+@login_required
+def remove_from_group(request):
+    if not request.user.account.is_group_admin:
+        return json_response({'status': 'error'})
+
+    try:
+        user_id = int(request.POST.get('user_id', ''))
+    except ValueError:
+        return json_response({'status': 'error'})
+
+    user = User.objects.filter(pk=user_id, account__group=request.user.account.group)
+    if user.exists():
+        user.account.group = None
+        return json_response({'status': 'success'})
+
+    return json_response({'status': 'error'})

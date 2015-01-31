@@ -13,7 +13,7 @@ class Group(models.Model):
 
 class Account(models.Model):
     user = models.OneToOneField(User, null=False)
-    group = models.OneToOneField(Group, null=True, default=None)
+    group = models.ForeignKey(Group, null=True, default=None)
     is_group_admin = models.BooleanField(default=False, null=None)
 
     def __unicode__(self):

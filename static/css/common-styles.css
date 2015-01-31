@@ -157,20 +157,17 @@ textarea#body {
     min-height: 100%;
 }
 
-
-#tweets {
+#tweets, #statistics {
     display: inline-block;
-    width: 45%;
+    width: 49%;
     height: 100%;
     min-height: 100%;
     border: 2px solid #eeeeee;
+    position: relative;
 }
 
 #statistics {
-    display: inline-block;
-    width: 29%;
-    height: 100%;
-    min-height: 100%;
+    float: right;
 }
 
 .tweet {
@@ -180,7 +177,11 @@ textarea#body {
 }
 
 .tweet-title, .tweet-body {
-    padding: 3px;
+    padding: 5px;
+}
+
+.tweet-body {
+    height: 50px;
 }
 
 .tweet-posted-by, .tweet-date {
@@ -198,7 +199,21 @@ textarea#body {
     font-weight: bold;
 }
 
-.delete-query {
+.tweet-polarity {
+    display: inline-block;
+    float: right;
+    font-size: 18px;
+}
+
+.pp {
+    color: green;
+}
+
+.pn {
+    color: gray;
+}
+
+.delete-query, .png {
     color: red;
 }
 
@@ -208,4 +223,21 @@ textarea#body {
 
 .stop-query {
     color: #000000;
+}
+
+#waiting {
+    width: 60%;
+    margin: 0 auto;
+}
+
+#waiting img, #waiting h6 {
+    display: inline-block;
+}
+
+.top-text {
+    vertical-align: top;
+}
+
+table tr td{
+    word-wrap: break-word;
 }

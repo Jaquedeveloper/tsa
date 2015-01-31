@@ -10,6 +10,7 @@ from queries.models import Query
 from tsa.celery_app import app
 
 from datetime import datetime
+from textblob import TextBlob
 
 api = TwitterAPI(
     settings.TWITTER_CONSUMER_KEY,
@@ -43,12 +44,13 @@ def get_tweets(query_id, query_string):
                     tweet = Tweet()
                     tweet.query = Query.objects.get(pk=query_id)
                     tweet.text = t['text']
-                    print t['created_at']
                     tweet.date = datetime.strptime(t['created_at'], '%a %b %d %H:%M:%S +0000 %Y')
                     hashtags = ' '.join((hashtag['text'] for hashtag in t['entities']['hashtags']))
                     tweet.hashtags = hashtags
                     tweet.twitter_user = t['user']['screen_name'] + ' (' + t['user']['name'] + ')'
                     tweet.tweet_id = t['id']
+                    tb = TextBlob(t['text'])
+                    tweet.polarity = tb.sentiment.polarity
                     tweet.save()
             if count == 100:
                 count = 5

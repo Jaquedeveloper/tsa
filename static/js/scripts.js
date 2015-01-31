@@ -2,7 +2,8 @@ var csrf_token = null;
 var host = 'http://' + document.domain + ':8000';
 var taskGetResults = null;
 var five_seconds = 5000;
-
+var editing = false;
+var editId = null;
 
 function getMyQueries() {
     var request_path = host + '/queries/my/';
@@ -11,23 +12,52 @@ function getMyQueries() {
         {csrfmiddlewaretoken: csrf_token},
         function (data) {
             if (data.hasOwnProperty('queries')) {
-                renderQueries(data['queries']);
+                var div = $("#queries");
+                renderQueries(data['queries'], div);
+            }
+            if (data.running_query_id) {
+                var id = data.running_query_id;
+                // very strange, this way works, but $("a.run-query#" + id) not
+                $("a.run-query[id=" + id + "]").hide();
+                $("a.stop-query[id=" + id + "]").show();
+                taskGetResults = createTask(getQueryResults, five_seconds, id);
+                $("#tweets").html('<div id="waiting" style="display: none"><img src="/static/images/ajax-loader.gif" alt="loading" /><h6>Waiting for tweets, one moment please</h6></div>');
+            }
+        }
+    );
+}
+
+function getGroupQueries() {
+    var request_path = host + '/queries/group/';
+    $.post(
+        request_path,
+        {csrfmiddlewaretoken: csrf_token},
+        function (data) {
+            if (data.hasOwnProperty('queries')) {
+                var div = $("#g_queries");
+                renderQueries(data['queries'], div);
             }
             if (data.running_query_id) {
                 var id = data.running_query_id;
                 // very strange, this way works, but $("a.run-query#" + id) not
                 $("a.run-query[id=" + id + "]").hide();
                 $("a.stop-query#" + id).show();
-                taskGetResults = createTask(getQueryResults, five_seconds, id);
+                if (!taskGetResults)
+                    taskGetResults = createTask(getQueryResults, five_seconds, id);
+                $("#tweets").html('<div id="waiting" style="display: none"><img src="/static/images/ajax-loader.gif" alt="loading" /><h6>Waiting for tweets, one moment please</h6></div>');
             }
         }
     );
 }
 
-function renderQueries(queries) {
-    var div = $("#queries");
+function renderQueries(queries, where) {
+    if (queries == null || queries.length == 0) {
+        where.append($('<h6>', {'text': 'There are no queries yet'}));
+        return;
+    }
+
     queries.forEach(function (query) {
-        renderQuery(query, div, true);
+        renderQuery(query, where, true);
     });
 }
 
@@ -125,6 +155,7 @@ function createQueryDisplayBody(query) {
     return table;
 }
 
+
 function renderQuery(query, container, append) {
     var div = $('<div>', {
         "class": "query",
@@ -143,6 +174,15 @@ function renderQuery(query, container, append) {
             $('<div>', {
                 'class': 'query-controls'
             }).append(
+                $('<a>', {
+                    'href': "#",
+                    'class': 'analyse-query',
+                    'id': query.id,
+                    'html': '<i class="fa fa-bar-chart">&nbsp;</i>Analyse (offline)'
+                }).click(lnkAnalyseQueryClickHandler)
+            ).append(
+                $('<span>', {'html': '&nbsp;'})
+            ).append(
                 $('<a>', {
                     'href': "#",
                     'class': 'stop-query',
@@ -166,7 +206,7 @@ function renderQuery(query, container, append) {
                     'class': 'edit-query',
                     'id': query.id,
                     'html': '<i class="fa fa-pencil">&nbsp;</i>Edit'
-                })
+                }).click(lnkEditQueryClickHandler)
             ).append(
                 $('<span>', {'html': '&nbsp;'})
             ).append(
@@ -225,10 +265,13 @@ function notification(msg, type, id, close_button) {
     return notice;
 }
 
+
 function btnCreateQueryClickHandler() {
     var request_path = host + "/queries/new/";
+
     var request_data = {
         csrfmiddlewaretoken: csrf_token,
+        id: editId,
         title: $("#title").val(),
         all_words: $('#all_words').val(),
         phrase: $('#phrase').val(),
@@ -241,10 +284,18 @@ function btnCreateQueryClickHandler() {
         is_public: $('#is_public').val()
     };
 
+    if (editing) {
+        request_path = host + "/queries/edit/";
+        request_data['editing'] = editing;
+    }
+
     if (request_data.title.length == 0) {
         $("#title").addClass('error');
         $('label[for="title"]').addClass('error');
         return false;
+    } else {
+        $("#title").removeClass('error');
+        $('label[for="title"]').removeClass('error');
     }
 
     if (
@@ -252,6 +303,7 @@ function btnCreateQueryClickHandler() {
         request_data.none_of.length == 0 && request_data.hashtags.length == 0 && request_data.users.length == 0 &&
         request_data.date_from.length == 0 && request_data.date_to.length == 0
     ) {
+        alert('At least one field of the query must be filled');
         return false;
     }
 
@@ -263,20 +315,33 @@ function btnCreateQueryClickHandler() {
             $("#status-message").empty().append(message);
             message.delay(3000).fadeOut();
             if (data.status == 'success') {
-                $('#title').val("");
-                $('#all_words').val("");
-                $('#phrase').val("");
-                $('#any_word').val("");
-                $("#none_of").val("");
-                $("#hashtags").val("");
-                $("#users").val("");
-                $("#df").val("");
-                $("#dt").val("");
+                clearNewQueryForm();
                 $('#is_public').val("");
-                renderQuery(data['query'], $("#queries"), false);
+                var qw = $("#queries");
+                qw.find($('h6')).remove();
+
+                if (data.edited) {
+                    editing = false;
+                    $("#btn-create-query").text("Create");
+                    $("#q" + editId).remove();
+                    $("a[href='#my_queries']").click();
+                }
+                renderQuery(data['query'], qw, false);
             }
         }
     );
+}
+
+function clearNewQueryForm() {
+    $('#title').val("");
+    $('#all_words').val("");
+    $('#phrase').val("");
+    $('#any_word').val("");
+    $("#none_of").val("");
+    $("#hashtags").val("");
+    $("#users").val("");
+    $("#df").val("");
+    $("#dt").val("");
 }
 
 function lnkDeleteQueryClickHandler() {
@@ -310,6 +375,8 @@ function lnkRunQueryClickHandler() {
         function (response) {
             if (response.status == 'success') {
                 taskGetResults = createTask(getQueryResults, five_seconds, id);
+                $("#waiting").show();
+                $("#nq").hide();
                 linkRun.hide();
                 linkRun.parent().find(".stop-query").show();
                 $("a[href='#my_dashboard']").click();
@@ -320,6 +387,104 @@ function lnkRunQueryClickHandler() {
 
 function createTask(func, interval, data) {
     return setInterval(func, interval, data);
+}
+
+function createFreqWordsTable(words) {
+    var FR = 0;
+    var TEXT = 1;
+    var table = $('<table>');
+
+    words.forEach(function (word) {
+        table.append(
+            $('<tr>').append(
+                $('<td>', {
+                    'text': word[TEXT],
+                    'class': 'w35pc'
+                })
+            ).append(
+                $('<td>', {
+                    'text': word[FR]
+                })
+            )
+        );
+    });
+
+    return table;
+}
+
+function getHashtagsString(hashtags) {
+    var str = '';
+    var TEXT = 1;
+
+    hashtags.forEach(function (item) {
+        str += '#' + item[TEXT] + '   ';
+    });
+
+    return str;
+}
+
+function getUsersString(users) {
+    var str = '';
+
+    users.forEach(function (user) {
+        str += '@' + user + '     ';
+    });
+
+    return str;
+}
+function displayStatistics(analysis) {
+    var div = $('#st');
+    div.empty();
+
+    var table = $('<table>');
+
+    table.append(
+        $('<tr>').append(
+            $('<th>', {
+                'text': 'Keywords:',
+                'class': 'top-text'
+            })
+        ).append(
+            $('<td>', {
+                'text': analysis.keywords
+            })
+        )
+    ).append(
+        $('<tr>').append(
+            $('<th>', {
+                'text': 'Hashtags:',
+                'class': 'top-text'
+            })
+        ).append(
+            $('<td>', {
+                'text': getHashtagsString(analysis.hashtags)
+            })
+        )
+    ).append(
+        $('<tr>').append(
+            $('<th>', {
+                'text': 'Users:',
+                'class': 'top-text'
+            })
+        ).append(
+            $('<td>', {
+                'text': getUsersString(analysis.users)
+            })
+        )
+    ).append(
+        $('<tr>').append(
+            $('<th>', {
+                'text': 'Frequent words:',
+                'class': 'top-text'
+            })
+        ).append(
+            $('<td>', {
+                'html': createFreqWordsTable(analysis.word_counts)
+            })
+        )
+    );
+
+    div.append(table);
 }
 
 function getQueryResults(id) {
@@ -333,6 +498,7 @@ function getQueryResults(id) {
         function (response) {
             if (response.status == 'success') {
                 renderTweets(response.tweets);
+                displayStatistics(response.analysis)
             }
         }
     );
@@ -361,10 +527,36 @@ function renderTweet(tweet, where) {
         $('<div>', {
             'class': 'tweet-body',
             'text': tweet.text
-        })
+        }).append($('<div>', {
+            'class': 'tweet-polarity',
+            'html': getTweetPolarityView(tweet.polarity)
+        }))
     );
 
     where.append(tweetDiv);
+}
+
+function getTweetPolarityView(polarity) {
+    var span = $('<span>');
+
+    if (polarity == 0.0) {
+        span.append($('<i>', {
+            'class': 'fa fa-circle-thin pn',
+            'html': '&nbsp;'
+        }));
+    } else if (polarity < 0.0) {
+        span.append($('<i>', {
+            'class': 'fa fa-frown-o png',
+            'html': '&nbsp;'
+        }));
+    } else {
+        span.append($('<i>', {
+            'class': 'fa fa-smile-o pp',
+            'html': '&nbsp;'
+        }));
+    }
+
+    return span;
 }
 
 function renderTweets(tweets) {
@@ -393,6 +585,69 @@ function lnkStopQueryClickHandler() {
             }
         }
     );
+}
+
+function fillNewQueryForm(query) {
+    $('#title').val(query.title);
+    $('#all_words').val(query.all_words);
+    $('#phrase').val(query.phrase);
+    $('#any_word').val(query.any_word);
+    $("#none_of").val(query.none_of);
+    $("#hashtags").val(query.hashtags);
+    $("#users").val(query.users);
+    $("#df").val(query.date_from);
+    $("#dt").val(query.date_to);
+}
+
+function lnkEditQueryClickHandler() {
+    var id = $(this).prop('id');
+    editId = id;
+    var request_path = host + '/queries/get/';
+    $.post(
+        request_path,
+        {
+            csrfmiddlewaretoken: csrf_token,
+            query_id: id
+        },
+        function (response) {
+            if (response.status == 'success') {
+                fillNewQueryForm(response.query);
+                $("a[href='#new_query']").click();
+                editing = true;
+                $("#btn-create-query").text("Edit");
+            }
+        }
+    );
+
+
+    return false;
+}
+
+function lnkAnalyseQueryClickHandler() {
+    var id = $(this).prop('id');
+    getQueryResults(id);
+    $("a[href='#my_dashboard']").click();
+}
+
+function lnkRemoveUserFromGroupClickHandler() {
+    if (!confirm('Are you sure?')) return;
+    var id = $(this).prop('id');
+    var request_path = host + '/accounts/group/remove/';
+    var linkRemove = $(this);
+    $.post(
+        request_path,
+        {
+            csrfmiddlewaretoken: csrf_token,
+            user_id: id
+        },
+        function (response) {
+            if (response.status == 'success') {
+                getGroupQueries();
+                linkRemove.parent().parent().remove();
+            }
+        }
+    );
+    return false;
 }
 
 $(document).ready(function () {

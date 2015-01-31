@@ -1,6 +1,5 @@
-from django.shortcuts import render
+from django.shortcuts import redirect
 
 
 def index(request):
-    context = dict(active_tab='home')
-    return render(request, 'index.html', context)
+    return redirect(to='login')
