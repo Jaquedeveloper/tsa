@@ -16,6 +16,7 @@ virtualenv .<br/>
 source bin/activate<br/>
 git clone https://github.com/joker-ace/tsa.git<br/>
 pip install -r tsa/requirements.txt<br/>
+python -m nltk.downloader all<br/>
 python tsa/manage.py migrate<br/>
 python tsa/manage.py syncdb<br/>
 python tsa/manage.py collectstatic --noinput<br/>
