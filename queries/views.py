@@ -1,7 +1,8 @@
+# coding=utf-8
 from django.contrib.auth.decorators import login_required
 from textblob import TextBlob
 
-from celery_app import app
+from tsa.celery_app import app
 from tsa.utils import json_response
 from tsa import tasks
 from queries.forms import QueryForm
