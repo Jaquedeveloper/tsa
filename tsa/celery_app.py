@@ -6,7 +6,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 
 from celery import Celery
 
-app = Celery('sna', broker='amqp://', include=['tsa.tasks'])
+app = Celery('tsa', backend='amqp', broker='amqp://', include=['tsa.tasks'])
 
 # Using a string here means the worker will not have to
 # pickle the object when using Windows.
