@@ -1,4 +1,7 @@
 # coding=utf-8
+"""
+    queries.views
+"""
 from django.contrib.auth.decorators import login_required
 from textblob import TextBlob
 
@@ -12,6 +15,11 @@ from tsa.models import Tweet
 
 @login_required
 def create_query(request):
+    """
+
+    :param request:
+    :return:
+    """
     if request.method != 'POST':
         return json_response({
             'status': 'error',
@@ -38,6 +46,11 @@ def create_query(request):
 
 @login_required
 def edit_query(request):
+    """
+
+    :param request:
+    :return:
+    """
     if request.method != 'POST':
         return json_response({
             'status': 'error',
@@ -53,14 +66,18 @@ def edit_query(request):
         })
 
     if request.user.account.is_group_admin:
-        query = Query.objects.filter(pk=query_id, user__acoount__group=request.user.account.group)
+        query = Query.objects.filter(
+            pk=query_id,
+            user__account__group=request.user.account.group,
+            is_public=True
+        )
     else:
         query = Query.objects.filter(pk=query_id, user=request.user)
 
     if not query.exists():
         return json_response({
             'status': 'error',
-            'message': 'Query not found'
+            'message': 'You have no permissions to edit this query'
         })
 
     rq = RunningQuery.objects.filter(query=query)
@@ -95,6 +112,11 @@ def edit_query(request):
 
 @login_required
 def get_query(request):
+    """
+
+    :param request:
+    :return:
+    """
     try:
         query_id = int(request.POST.get('query_id', ''))
     except ValueError:
@@ -103,10 +125,12 @@ def get_query(request):
             'message': 'Invalid query id format'
         })
 
-    if request.user.account.is_group_admin:
-        query = Query.objects.filter(pk=query_id, user__acoount__group=request.user.account.group)
-    else:
-        query = Query.objects.filter(pk=query_id, user=request.user)
+    query = Query.objects.filter(pk=query_id, user=request.user)
+    if not query.exists():
+        query = Query.objects.filter(
+            pk=query_id,
+            user__account__group=request.user.account.group
+        ).filter(is_public=True)
 
     if not query.exists():
         return json_response({
@@ -125,6 +149,11 @@ def get_query(request):
 
 @login_required
 def delete_query(request):
+    """
+
+    :param request:
+    :return:
+    """
     try:
         query_id = int(request.POST.get('query_id', ''))
     except ValueError:
@@ -134,14 +163,18 @@ def delete_query(request):
         })
 
     if request.user.account.is_group_admin:
-        query = Query.objects.filter(pk=query_id, user__account__group=request.user.account.group)
+        query = Query.objects.filter(
+            pk=query_id,
+            user__account__group=request.user.account.group,
+            is_public=True
+        )
     else:
         query = Query.objects.filter(user=request.user, pk=query_id)
 
     if not query.exists():
         return json_response({
             'status': 'error',
-            'message': 'Query not found'
+            'message': 'You have no permissions to delete this query'
         })
 
     query = query.first()
@@ -164,6 +197,11 @@ def delete_query(request):
 
 @login_required
 def run_query(request):
+    """
+
+    :param request:
+    :return:
+    """
     rq = RunningQuery.objects.filter(user=request.user)
     if rq.exists() > 0:
         return json_response({
@@ -179,10 +217,13 @@ def run_query(request):
             'message': 'Invalid query id format'
         })
 
-    if request.user.account.is_group_admin:
-        query = Query.objects.filter(pk=query_id, user__account__group=request.user.account.group)
-    else:
-        query = Query.objects.filter(user=request.user, pk=query_id)
+    query = Query.objects.filter(user=request.user, pk=query_id)
+    if not query.exists():
+        query = Query.objects.filter(
+            pk=query_id,
+            user__account__group=request.user.account.group,
+            is_public=True
+        )
 
     if not query.exists():
         return json_response({
@@ -208,6 +249,11 @@ def run_query(request):
 
 @login_required
 def stop_query(request):
+    """
+
+    :param request:
+    :return:
+    """
     rq = RunningQuery.objects.filter(user=request.user)
     if not rq.exists():
         return json_response({
@@ -223,10 +269,13 @@ def stop_query(request):
             'message': 'Invalid query id format'
         })
 
-    if request.user.account.is_group_admin:
-        query = Query.objects.filter(pk=query_id, user__account__group=request.user.account.group)
-    else:
-        query = Query.objects.filter(user=request.user, pk=query_id)
+    query = Query.objects.filter(user=request.user, pk=query_id)
+    if not query.exists():
+        query = Query.objects.filter(
+            pk=query_id,
+            user__account__group=request.user.account.group,
+            is_public=True
+        )
 
     if not query.exists():
         return json_response({
@@ -255,6 +304,11 @@ def stop_query(request):
 
 @login_required
 def get_my_queries(request):
+    """
+
+    :param request:
+    :return:
+    """
     my_queries = Query.objects.filter(user=request.user).order_by('-date')
     queries = [q.to_dict() for q in my_queries]
 
@@ -273,6 +327,11 @@ def get_my_queries(request):
 
 @login_required
 def get_group_queries(request):
+    """
+
+    :param request:
+    :return:
+    """
     if request.user.account.group:
         group_queries = Query.objects.filter(
             user__account__group=request.user.account.group, is_public=True
@@ -299,8 +358,12 @@ def get_group_queries(request):
 
 @login_required
 def get_query_results(request):
+    """
+
+    :param request:
+    :return:
+    """
     rq = RunningQuery.objects.filter(user=request.user)
-    query_id = 0
     if not rq.exists():
         try:
             query_id = int(request.POST.get('query_id', ''))
@@ -313,10 +376,13 @@ def get_query_results(request):
         rq = rq.first()
         query_id = rq.query.id
 
-    if request.user.account.is_group_admin:
-        query = Query.objects.filter(pk=query_id, user__account__group=request.user.account.group)
-    else:
-        query = Query.objects.filter(user=request.user, pk=query_id)
+    query = Query.objects.filter(user=request.user, pk=query_id)
+    if not query.exists():
+        query = Query.objects.filter(
+            pk=query_id,
+            user__account__group=request.user.account.group,
+            is_public=True
+        )
 
     if not query.exists():
         return json_response({
@@ -343,7 +409,7 @@ def get_query_results(request):
     for tweet in tweets:
         full_text += tweet['text'] + ' '
         for ht in tweet['hashtags'].split():
-            if not ht in hashtags:
+            if ht not in hashtags:
                 hashtags[ht] = 0
             hashtags[ht] += 1
         users.add(tweet['user'])
