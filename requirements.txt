@@ -3,3 +3,4 @@ twitterapi==2.2.8
 requests==2.5.1
 gunicorn
 TextBlob==0.9.0
+celery

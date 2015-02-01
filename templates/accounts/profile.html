@@ -5,6 +5,9 @@
 {% block header %}{{ block.super }}{% endblock %}
 
 {% block content %}
+    <div id="status-message">
+
+    </div>
     <div id="dashboard">
         <ul class="tabs center">
             <li><a href="#new_query"><i class="fa fa-search-plus">&nbsp;</i>New Query</a></li>
@@ -24,11 +27,6 @@
                         <td colspan="2" id="btn-cell">
                             <button class="full-width square" id="btn-create-query">Create</button>
                             {% csrf_token %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" id="status-message">
-
                         </td>
                     </tr>
                 </table>

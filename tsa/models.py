@@ -23,5 +23,5 @@ class Tweet(models.Model):
             'hashtags': self.hashtags,
             'user': self.twitter_user,
             'id': self.tweet_id,
-            'polarity': (self.polarity * 5.0)
+            'polarity': round(self.polarity, 2)
         }

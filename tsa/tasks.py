@@ -50,12 +50,12 @@ def get_tweets(query_id, query_string):
                     tweet.twitter_user = t['user']['screen_name'] + ' (' + t['user']['name'] + ')'
                     tweet.tweet_id = t['id']
                     tb = TextBlob(t['text'])
-                    tweet.polarity = tb.sentiment.polarity
+                    tweet.polarity = tb.sentiment.polarity * 10
                     tweet.save()
             if count == 100:
                 count = 5
 
-            time.sleep(5)
+            time.sleep(settings.TWITTER_API_REQUEST_DELAY)
 
     except Exception as e:
         print(e.message)

@@ -10,11 +10,17 @@ class Group(models.Model):
     def __unicode__(self):
         return self.title
 
+    @classmethod
+    def get_default_group(self):
+        return Group.objects.get(pk=1)
+
 
 class Account(models.Model):
     user = models.OneToOneField(User, null=False)
-    group = models.ForeignKey(Group, null=True, default=None)
+    group = models.ForeignKey(Group, null=True, default=Group.get_default_group)
     is_group_admin = models.BooleanField(default=False, null=None)
 
     def __unicode__(self):
         return self.user.username
+
+

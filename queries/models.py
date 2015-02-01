@@ -3,6 +3,7 @@ from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class Query(models.Model):
     title = models.CharField(max_length=100, null=False)
     user = models.ForeignKey(User)
@@ -80,3 +81,12 @@ class Query(models.Model):
             query += 'until:' + str(self.date_to)
 
         return query
+
+
+class RunningQuery(models.Model):
+    user = models.ForeignKey(User)
+    query = models.ForeignKey(Query)
+    task_id = models.CharField(max_length=255, null=False)
+
+    def __unicode__(self):
+        return unicode(self.task_id)

@@ -5,14 +5,17 @@ from celery_app import app
 from tsa.utils import json_response
 from tsa import tasks
 from queries.forms import QueryForm
-from queries.models import Query
+from queries.models import Query, RunningQuery
 from tsa.models import Tweet
 
 
 @login_required
 def create_query(request):
     if request.method != 'POST':
-        return json_response({'status': 'error', 'message': 'Invalid request type'})
+        return json_response({
+            'status': 'error',
+            'message': 'Invalid request type'
+        })
 
     form = QueryForm(request.POST)
     if form.is_valid():
@@ -26,14 +29,245 @@ def create_query(request):
             'query': query.to_dict()
         })
 
-    return json_response({'status': 'error', 'message': 'Fill required fields'})
+    return json_response({
+        'status': 'error',
+        'message': 'Fill all required fields'
+    })
+
+
+@login_required
+def edit_query(request):
+    if request.method != 'POST':
+        return json_response({
+            'status': 'error',
+            'message': 'Invalid request type'
+        })
+
+    try:
+        query_id = int(request.POST.get('id', ''))
+    except ValueError:
+        return json_response({
+            'status': 'error',
+            'message': 'Invalid query id format'
+        })
+
+    if request.user.account.is_group_admin:
+        query = Query.objects.filter(pk=query_id, user__acoount__group=request.user.account.group)
+    else:
+        query = Query.objects.filter(pk=query_id, user=request.user)
+
+    if not query.exists():
+        return json_response({
+            'status': 'error',
+            'message': 'Query not found'
+        })
+
+    rq = RunningQuery.objects.filter(query=query)
+    if rq.exists():
+        return json_response({
+            'status': 'error',
+            'message': "You can't edit running query"
+        })
+
+    query = query.first()
+
+    query.title = request.POST.get('title')
+    query.all_words = request.POST.get('all_words')
+    query.phrase = request.POST.get('phrase')
+    query.any_word = request.POST.get('any_word')
+    query.none_of = request.POST.get('none_of')
+    query.hashtags = request.POST.get('hashtags')
+    query.users = request.POST.get('users')
+    query.date_from = request.POST.get('date_from') or None
+    query.date_to = request.POST.get('date_to') or None
+    query.is_public = request.POST.get('is_public') or False
+
+    query.save()
+
+    return json_response({
+        'status': 'success',
+        'query': query.to_dict(),
+        'edited': True,
+        'message': 'Query successfully edited!'
+    })
+
+
+@login_required
+def get_query(request):
+    try:
+        query_id = int(request.POST.get('query_id', ''))
+    except ValueError:
+        return json_response({
+            'status': 'error',
+            'message': 'Invalid query id format'
+        })
+
+    if request.user.account.is_group_admin:
+        query = Query.objects.filter(pk=query_id, user__acoount__group=request.user.account.group)
+    else:
+        query = Query.objects.filter(pk=query_id, user=request.user)
+
+    if not query.exists():
+        return json_response({
+            'status': 'error',
+            'message': 'Query not found'
+        })
+
+    query = query.first()
+
+    return json_response({
+        'status': 'success',
+        'message': 'Query was found',
+        'query': query.to_dict()
+    })
+
+
+@login_required
+def delete_query(request):
+    try:
+        query_id = int(request.POST.get('query_id', ''))
+    except ValueError:
+        return json_response({
+            'status': 'error',
+            'message': 'Invalid query id format'
+        })
+
+    if request.user.account.is_group_admin:
+        query = Query.objects.filter(pk=query_id, user__account__group=request.user.account.group)
+    else:
+        query = Query.objects.filter(user=request.user, pk=query_id)
+
+    if not query.exists():
+        return json_response({
+            'status': 'error',
+            'message': 'Query not found'
+        })
+
+    query = query.first()
+
+    rq = RunningQuery.objects.filter(query=query)
+    if rq.exists():
+        return json_response({
+            'status': 'error',
+            'message': "You can't delete running query"
+        })
+
+    query.delete()
+    rq.filter(user=request.user).delete()
+
+    return json_response({
+        'status': 'success',
+        'message': 'Query was deleted!'
+    })
+
+
+@login_required
+def run_query(request):
+    rq = RunningQuery.objects.filter(user=request.user)
+    if rq.exists() > 0:
+        return json_response({
+            'status': 'error',
+            'message': "You can't run more than one query right now"
+        })
+
+    try:
+        query_id = int(request.POST.get('query_id', ''))
+    except ValueError:
+        return json_response({
+            'status': 'error',
+            'message': 'Invalid query id format'
+        })
+
+    if request.user.account.is_group_admin:
+        query = Query.objects.filter(pk=query_id, user__account__group=request.user.account.group)
+    else:
+        query = Query.objects.filter(user=request.user, pk=query_id)
+
+    if not query.exists():
+        return json_response({
+            'status': 'error',
+            'message': 'Query not found'
+        })
+
+    query = query.first()
+
+    task_id = tasks.get_tweets.delay(query_id, query.to_search_query_string()).id
+
+    rq = RunningQuery()
+    rq.user = request.user
+    rq.query = query
+    rq.task_id = task_id
+    rq.save()
+
+    return json_response({
+        'status': 'success',
+        'message': 'Query was run. Wait for results!'
+    })
+
+
+@login_required
+def stop_query(request):
+    rq = RunningQuery.objects.filter(user=request.user)
+    if not rq.exists():
+        return json_response({
+            'status': 'error',
+            'message': 'You have no running queries'
+        })
+
+    try:
+        query_id = int(request.POST.get('query_id', ''))
+    except ValueError:
+        return json_response({
+            'status': 'error',
+            'message': 'Invalid query id format'
+        })
+
+    if request.user.account.is_group_admin:
+        query = Query.objects.filter(pk=query_id, user__account__group=request.user.account.group)
+    else:
+        query = Query.objects.filter(user=request.user, pk=query_id)
+
+    if not query.exists():
+        return json_response({
+            'status': 'error',
+            'message': 'Query not found'
+        })
+
+    query = query.first()
+
+    rq = rq.filter(query=query)
+
+    if not rq.exists():
+        return json_response({
+            'status': 'error',
+            'message': 'This query was run not by you'
+        })
+
+    rq = rq.first()
+    app.control.revoke(rq.task_id, terminate=True)
+    rq.delete()
+    return json_response({
+        'status': 'success',
+        'message': 'Query was stopped'
+    })
 
 
 @login_required
 def get_my_queries(request):
     my_queries = Query.objects.filter(user=request.user).order_by('-date')
     queries = [q.to_dict() for q in my_queries]
-    return json_response({'queries': queries, 'running_query_id': request.session.get('running_query_id')})
+
+    rq = RunningQuery.objects.filter(user=request.user)
+    running_query_id = None
+
+    if rq.exists():
+        rq = rq.first()
+        running_query_id = rq.query.id
+
+    return json_response({
+        'queries': queries,
+        'running_query_id': running_query_id
+    })
 
 
 @login_required
@@ -47,140 +281,58 @@ def get_group_queries(request):
             '-date'
         )
         queries = [q.to_dict() for q in group_queries]
-        return json_response({'queries': queries, 'running_query_id': request.session.get('running_query_id')})
+
+        rq = RunningQuery.objects.filter(user=request.user)
+        running_query_id = None
+
+        if rq.exists():
+            rq = rq.first()
+            running_query_id = rq.query.id
+
+        return json_response({
+            'queries': queries,
+            'running_query_id': running_query_id
+        })
     return json_response({'queries': None})
 
 
 @login_required
-def delete_query(request):
-    try:
-        query_id = int(request.POST.get('id', ''))
-    except ValueError:
-        return json_response({'status': 'error'})
-
-    if request.user.account.is_group_admin:
-        query = Query.objects.filter(
-            pk=query_id, user__account__group=request.user.account.group
-        )
-    else:
-        query = Query.objects.filter(user=request.user, pk=query_id)
-
-    if query:
-        query.delete()
-        return json_response({'status': 'success'})
-
-    return json_response({'status': 'error'})
-
-
-@login_required
-def run_query(request):
-    if request.session.get('running_task_id'):
-        return json_response({'status': 'already-running-task'})
-
-    try:
-        query_id = int(request.POST.get('query_id', ''))
-    except ValueError:
-        return json_response({'status': 'error'})
-
-    try:
-        query = Query.objects.get(pk=query_id)
-    except Query.DoesNotExist:
-        return json_response({'status': 'error'})
-
-    task_id = tasks.get_tweets.delay(query_id, query.to_search_query_string()).id
-
-    request.session['running_task_id'] = task_id
-    request.session['running_query_id'] = query_id
-    return json_response({'status': 'success'})
-
-
-@login_required
-def stop_query(request):
-    if not request.session.get('running_task_id'):
-        return json_response({'status': 'no-running-query'})
-
-    try:
-        query_id = int(request.POST.get('query_id', ''))
-    except ValueError:
-        return json_response({'status': 'error'})
-
-    try:
-        running_query_id = int(request.session.get('running_query_id', ''))
-    except ValueError:
-        return json_response({'status': 'error'})
-
-    if running_query_id != query_id:
-        json_response({'status': 'error'})
-
-    task_id = request.session.get('running_task_id')
-    if task_id:
-        app.control.revoke(task_id, terminate=True)
-        del request.session['running_task_id']
-        del request.session['running_query_id']
-        return json_response({'status': 'stopped'})
-
-    return json_response({'status': 'no-running-task'})
-
-
-@login_required
-def get_query(request):
-    try:
-        query_id = int(request.POST.get('query_id', ''))
-    except ValueError:
-        return json_response({'status': 'error'})
-
-    try:
-        query = Query.objects.get(pk=query_id)
-    except Query.DoesNotExist:
-        return json_response({'status': 'error'})
-
-    return json_response({'status': 'success', 'query': query.to_dict()})
-
-
-@login_required
-def edit_query(request):
-    try:
-        query_id = int(request.POST.get('id', ''))
-    except ValueError:
-        return json_response({'status': 'error'})
-
-    try:
-        query = Query.objects.get(pk=query_id)
-    except Query.DoesNotExist:
-        return json_response({'status': 'error'})
-
-    query.title = request.POST.get('title')
-    query.all_words = request.POST.get('all_words')
-    query.phrase = request.POST.get('phrase')
-    query.any_word = request.POST.get('any_word')
-    query.none_of = request.POST.get('none_of')
-    query.hashtags = request.POST.get('hashtags')
-    query.users = request.POST.get('users')
-    query.date_from = request.POST.get('date_from') or None
-    query.date_to = request.POST.get('date_to') or None
-    query.is_public = request.POST.get('is_public') or False
-
-
-    query.save()
-
-    return json_response({'status': 'success', 'query': query.to_dict(), 'edited': True, 'message': 'Success!'})
-
-
-@login_required
 def get_query_results(request):
-    query_id = request.session.get('running_query_id')
-    if not query_id:
+    rq = RunningQuery.objects.filter(user=request.user)
+    query_id = 0
+    if not rq.exists():
         try:
             query_id = int(request.POST.get('query_id', ''))
         except ValueError:
-            return json_response({'status': 'error'})
+            return json_response({
+                'status': 'error',
+                'message': 'Invalid query id format'
+            })
+    else:
+        rq = rq.first()
+        query_id = rq.query.id
 
-    try:
-        query = Query.objects.get(pk=query_id)
-    except Query.DoesNotExist:
-        return json_response({'status': 'error'})
+    if request.user.account.is_group_admin:
+        query = Query.objects.filter(pk=query_id, user__account__group=request.user.account.group)
+    else:
+        query = Query.objects.filter(user=request.user, pk=query_id)
+
+    if not query.exists():
+        return json_response({
+            'status': 'error',
+            'message': 'Query not found'
+        })
+
+    query = query.first()
 
     tweets = Tweet.objects.filter(query=query).order_by('-date')
+
+    if not tweets.exists():
+        return json_response({
+            'status': 'error',
+            'message': 'No tweets to analyse'
+        })
+
     tweets = [tweet.to_dict() for tweet in tweets]
 
     full_text = ''
@@ -214,10 +366,8 @@ def get_query_results(request):
         'keywords': keywords
     }
 
-    return json_response(
-        {
-            'status': 'success',
-            'tweets': tweets,
-            'analysis': analysis
-        }
-    )
+    return json_response({
+        'status': 'success',
+        'tweets': tweets,
+        'analysis': analysis
+    })

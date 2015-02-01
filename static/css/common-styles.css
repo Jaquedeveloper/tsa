@@ -59,6 +59,13 @@ textarea#body {
     padding-top: 10px;
 }
 
+#status-message {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    z-index: 1;
+}
+
 #status-message .notice {
     text-align: center;
 }

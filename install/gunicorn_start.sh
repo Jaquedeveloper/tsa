@@ -9,7 +9,7 @@ GROUP=webapps                                     			# the group to run as
 NUM_WORKERS=2                                     			# how many worker processes should Gunicorn spawn
 DJANGO_SETTINGS_MODULE=settings             				# which settings file should Django use
 DJANGO_WSGI_MODULE=tsa.wsgi                     			# WSGI module name
- 
+
 echo "Starting $NAME as `whoami`"
  
 # Activate the virtual environment

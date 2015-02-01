@@ -5,6 +5,191 @@ var five_seconds = 5000;
 var editing = false;
 var editId = null;
 
+
+function getMessage(msg, type, id, close_button) {
+    var notice = $('<div>', {
+        'class': 'notice ' + type,
+        'id': id
+    });
+
+    notice.append($('<i>', {
+        'class': ('fa ' + (type == 'success' ? 'fa-check' : 'fa-times'))
+    }));
+
+    notice.append($('<span>', {
+        'text': msg
+    }));
+
+    if (close_button) {
+        notice.append($('<a>', {
+            'class': 'fa fa-close',
+            'href': '#close'
+        }));
+    }
+
+    return notice;
+}
+
+function notify(data) {
+    var message = getMessage(data.message, data.status, "5000msNotice", false);
+    $("#status-message").empty().append(message);
+    message.delay(5000).fadeOut();
+}
+
+
+function btnCreateQueryClickHandler() {
+    var request_path = host + "/queries/new/";
+    var request_data = {
+        csrfmiddlewaretoken: csrf_token,
+        id: editId,
+        title: $("#title").val(),
+        all_words: $('#all_words').val(),
+        phrase: $('#phrase').val(),
+        any_word: $('#any_word').val(),
+        none_of: $("#none_of").val(),
+        hashtags: $("#hashtags").val(),
+        users: $("#users").val(),
+        date_from: $("#df").val(),
+        date_to: $("#dt").val(),
+        is_public: $('#is_public').val()
+    };
+
+    if (editing) {
+        request_path = host + "/queries/edit/";
+        request_data['editing'] = editing;
+    }
+
+    if (request_data.title.length == 0) {
+        $("#title").addClass('error');
+        $('label[for="title"]').addClass('error');
+        return false;
+    } else {
+        $("#title").removeClass('error');
+        $('label[for="title"]').removeClass('error');
+    }
+
+    if (
+        request_data.all_words.length == 0 && request_data.phrase.length == 0 && request_data.any_word.length == 0 &&
+        request_data.none_of.length == 0 && request_data.hashtags.length == 0 && request_data.users.length == 0 &&
+        request_data.date_from.length == 0 && request_data.date_to.length == 0
+    ) {
+        alert('At least one field of the query must be filled');
+        return false;
+    }
+
+    $.post(
+        request_path,
+        request_data,
+        function (data) {
+            notify(data);
+            if (data.status == 'success') {
+                clearNewQueryForm();
+                $('#is_public').val("");
+                var qw = $("#queries");
+                qw.find($('h6')).remove();
+
+                if (data.edited) {
+                    editing = false;
+                    $("#btn-create-query").text("Create");
+                    $("#q" + editId).remove();
+                    $("a[href='#my_queries']").click();
+                }
+                renderQuery(data['query'], qw, false);
+            }
+        }
+    );
+}
+
+
+function lnkEditQueryClickHandler() {
+    var id = $(this).prop('id');
+    editId = id;
+    var request_path = host + '/queries/get/';
+    $.post(
+        request_path,
+        {
+            csrfmiddlewaretoken: csrf_token,
+            query_id: id
+        },
+        function (response) {
+            notify(response);
+            if (response.status == 'success') {
+                fillNewQueryForm(response.query);
+                $("a[href='#new_query']").click();
+                editing = true;
+                $("#btn-create-query").text("Edit");
+            }
+        }
+    );
+
+    return false;
+}
+
+
+function lnkDeleteQueryClickHandler() {
+    if (!confirm('Are you sure?')) return false;
+    var request_path = host + '/queries/delete/';
+    var id = $(this).prop('id');
+    $.post(
+        request_path,
+        {
+            csrfmiddlewaretoken: csrf_token,
+            query_id: id
+        },
+        function (response) {
+            notify(response);
+            if (response.status == 'success') {
+                $("#q" + id).remove();
+            }
+        }
+    );
+}
+
+function lnkRunQueryClickHandler() {
+    var id = $(this).prop('id');
+    var request_path = host + '/queries/run/';
+    var linkRun = $(this);
+    $.post(
+        request_path,
+        {
+            csrfmiddlewaretoken: csrf_token,
+            query_id: id
+        },
+        function (response) {
+            notify(response);
+            if (response.status == 'success') {
+                taskGetResults = createTask(getQueryResults, five_seconds, id);
+                $("#waiting").show();
+                $("#nq").hide();
+                linkRun.hide();
+                linkRun.parent().find(".stop-query").show();
+                $("a[href='#my_dashboard']").click();
+            }
+        }
+    );
+}
+
+function lnkStopQueryClickHandler() {
+    var id = $(this).prop('id');
+    var request_path = host + '/queries/stop/';
+    var linkStop = $(this);
+    $.post(
+        request_path,
+        {
+            csrfmiddlewaretoken: csrf_token,
+            query_id: id
+        },
+        function (response) {
+            notify(response);
+            if (response.status == 'success') {
+                clearInterval(taskGetResults);
+                linkStop.hide();
+                linkStop.parent().find(".run-query").show();
+            }
+        }
+    );
+}
+
 function getMyQueries() {
     var request_path = host + '/queries/my/';
     $.post(
@@ -20,7 +205,8 @@ function getMyQueries() {
                 // very strange, this way works, but $("a.run-query#" + id) not
                 $("a.run-query[id=" + id + "]").hide();
                 $("a.stop-query[id=" + id + "]").show();
-                taskGetResults = createTask(getQueryResults, five_seconds, id);
+                if (!taskGetResults)
+                    taskGetResults = createTask(getQueryResults, five_seconds, id);
                 $("#tweets").html('<div id="waiting" style="display: none"><img src="/static/images/ajax-loader.gif" alt="loading" /><h6>Waiting for tweets, one moment please</h6></div>');
             }
         }
@@ -241,97 +427,6 @@ function renderQuery(query, container, append) {
 }
 
 
-function notification(msg, type, id, close_button) {
-    var notice = $('<div>', {
-        'class': 'notice ' + type,
-        'id': id
-    });
-
-    notice.append($('<i>', {
-        'class': ('fa ' + (type == 'success' ? 'fa-check' : 'fa-times'))
-    }));
-
-    notice.append($('<span>', {
-        'text': msg
-    }));
-
-    if (close_button) {
-        notice.append($('<a>', {
-            'class': 'fa fa-close',
-            'href': '#close'
-        }));
-    }
-
-    return notice;
-}
-
-
-function btnCreateQueryClickHandler() {
-    var request_path = host + "/queries/new/";
-
-    var request_data = {
-        csrfmiddlewaretoken: csrf_token,
-        id: editId,
-        title: $("#title").val(),
-        all_words: $('#all_words').val(),
-        phrase: $('#phrase').val(),
-        any_word: $('#any_word').val(),
-        none_of: $("#none_of").val(),
-        hashtags: $("#hashtags").val(),
-        users: $("#users").val(),
-        date_from: $("#df").val(),
-        date_to: $("#dt").val(),
-        is_public: $('#is_public').val()
-    };
-
-    if (editing) {
-        request_path = host + "/queries/edit/";
-        request_data['editing'] = editing;
-    }
-
-    if (request_data.title.length == 0) {
-        $("#title").addClass('error');
-        $('label[for="title"]').addClass('error');
-        return false;
-    } else {
-        $("#title").removeClass('error');
-        $('label[for="title"]').removeClass('error');
-    }
-
-    if (
-        request_data.all_words.length == 0 && request_data.phrase.length == 0 && request_data.any_word.length == 0 &&
-        request_data.none_of.length == 0 && request_data.hashtags.length == 0 && request_data.users.length == 0 &&
-        request_data.date_from.length == 0 && request_data.date_to.length == 0
-    ) {
-        alert('At least one field of the query must be filled');
-        return false;
-    }
-
-    $.post(
-        request_path,
-        request_data,
-        function (data) {
-            var message = notification(data.message, data.status, "3000msNotice", false);
-            $("#status-message").empty().append(message);
-            message.delay(3000).fadeOut();
-            if (data.status == 'success') {
-                clearNewQueryForm();
-                $('#is_public').val("");
-                var qw = $("#queries");
-                qw.find($('h6')).remove();
-
-                if (data.edited) {
-                    editing = false;
-                    $("#btn-create-query").text("Create");
-                    $("#q" + editId).remove();
-                    $("a[href='#my_queries']").click();
-                }
-                renderQuery(data['query'], qw, false);
-            }
-        }
-    );
-}
-
 function clearNewQueryForm() {
     $('#title').val("");
     $('#all_words').val("");
@@ -342,47 +437,6 @@ function clearNewQueryForm() {
     $("#users").val("");
     $("#df").val("");
     $("#dt").val("");
-}
-
-function lnkDeleteQueryClickHandler() {
-    if (!confirm('Are you sure?')) return false;
-    var request_path = host + '/queries/delete/';
-    var id = $(this).prop('id');
-    $.post(
-        request_path,
-        {
-            csrfmiddlewaretoken: csrf_token,
-            id: id
-        },
-        function (response) {
-            if (response.status == 'success') {
-                $("#q" + id).remove();
-            }
-        }
-    );
-}
-
-function lnkRunQueryClickHandler() {
-    var id = $(this).prop('id');
-    var request_path = host + '/queries/run/';
-    var linkRun = $(this);
-    $.post(
-        request_path,
-        {
-            csrfmiddlewaretoken: csrf_token,
-            query_id: id
-        },
-        function (response) {
-            if (response.status == 'success') {
-                taskGetResults = createTask(getQueryResults, five_seconds, id);
-                $("#waiting").show();
-                $("#nq").hide();
-                linkRun.hide();
-                linkRun.parent().find(".stop-query").show();
-                $("a[href='#my_dashboard']").click();
-            }
-        }
-    );
 }
 
 function createTask(func, interval, data) {
@@ -499,6 +553,8 @@ function getQueryResults(id) {
             if (response.status == 'success') {
                 renderTweets(response.tweets);
                 displayStatistics(response.analysis)
+            } else {
+                notify(response)
             }
         }
     );
@@ -542,17 +598,17 @@ function getTweetPolarityView(polarity) {
     if (polarity == 0.0) {
         span.append($('<i>', {
             'class': 'fa fa-circle-thin pn',
-            'html': '&nbsp;'
+            'html': '&nbsp;' + polarity
         }));
     } else if (polarity < 0.0) {
         span.append($('<i>', {
             'class': 'fa fa-frown-o png',
-            'html': '&nbsp;'
+            'html': '&nbsp;' + polarity
         }));
     } else {
         span.append($('<i>', {
             'class': 'fa fa-smile-o pp',
-            'html': '&nbsp;'
+            'html': '&nbsp;' + polarity
         }));
     }
 
@@ -567,25 +623,6 @@ function renderTweets(tweets) {
     });
 }
 
-function lnkStopQueryClickHandler() {
-    var id = $(this).prop('id');
-    var request_path = host + '/queries/stop/';
-    var linkStop = $(this);
-    $.post(
-        request_path,
-        {
-            csrfmiddlewaretoken: csrf_token,
-            query_id: id
-        },
-        function (response) {
-            if (response.status == 'stopped') {
-                clearInterval(taskGetResults);
-                linkStop.hide();
-                linkStop.parent().find(".run-query").show();
-            }
-        }
-    );
-}
 
 function fillNewQueryForm(query) {
     $('#title').val(query.title);
@@ -599,29 +636,6 @@ function fillNewQueryForm(query) {
     $("#dt").val(query.date_to);
 }
 
-function lnkEditQueryClickHandler() {
-    var id = $(this).prop('id');
-    editId = id;
-    var request_path = host + '/queries/get/';
-    $.post(
-        request_path,
-        {
-            csrfmiddlewaretoken: csrf_token,
-            query_id: id
-        },
-        function (response) {
-            if (response.status == 'success') {
-                fillNewQueryForm(response.query);
-                $("a[href='#new_query']").click();
-                editing = true;
-                $("#btn-create-query").text("Edit");
-            }
-        }
-    );
-
-
-    return false;
-}
 
 function lnkAnalyseQueryClickHandler() {
     var id = $(this).prop('id');
