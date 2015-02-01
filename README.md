@@ -20,7 +20,6 @@ python -m nltk.downloader all<br/>
 python tsa/manage.py migrate<br/>
 python tsa/manage.py syncdb<br/>
 python tsa/manage.py collectstatic --noinput<br/>
-chmod +x tsa/runcelery.sh
 deactivate<br/>
 mkdir /webapps/tsa/logs<br/>
 touch /webapps/tsa/logs/gunicorn_supervisor.log<br/>
