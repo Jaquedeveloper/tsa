@@ -49,8 +49,16 @@
                     </div>
                 </div>
                 <div id="statistics">
-                    <h6 style="text-align: center">Statistics</h6>
-
+                    <h6 style="text-align: center;">Statistics</h6>
+                    <table id="filter">
+                        <tr>
+                            <td>
+                                Filter:
+                                <input type="text" class="square" value="" id="filter-text"/>
+                                <button id="btn-filter" class="square small">Filter</button>
+                            </td>
+                        </tr>
+                    </table>
                     <div id="st">
 
                     </div>
@@ -100,7 +108,7 @@
                 dateFormat: 'yy-mm-dd'
             });
 
-            $("a[href='#new_query']").click(function() {
+            $("a[href='#new_query']").click(function () {
                 if (editing) {
                     editing = false;
                     $("#btn-create-query").text("Create");
@@ -108,6 +116,7 @@
                 }
             });
             $('#btn-create-query').click(btnCreateQueryClickHandler);
+            $('#btn-filter').click(btnFilterClickHandler);
             $('a.group-remove').click(lnkRemoveUserFromGroupClickHandler);
             getMyQueries();
             getGroupQueries();

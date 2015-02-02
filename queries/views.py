@@ -2,7 +2,12 @@
 """
     queries.views
 """
+import os
+
 from django.contrib.auth.decorators import login_required
+from django.http import Http404, HttpResponse
+from django.shortcuts import render
+from django.conf import settings
 from textblob import TextBlob
 
 from tsa.celery_app import app
@@ -438,3 +443,121 @@ def get_query_results(request):
         'tweets': tweets,
         'analysis': analysis
     })
+
+
+@login_required
+def filter_tweets(request, query_id, filter_str):
+    """
+
+    :param request:
+    :param query_id:
+    :param filter_str:
+    :return:
+    """
+    try:
+        query_id = int(query_id)
+    except ValueError:
+        raise Http404("Query not found")
+
+    query = Query.objects.filter(user=request.user, pk=query_id)
+    if not query.exists():
+        query = Query.objects.filter(
+            pk=query_id,
+            user__account__group=request.user.account.group,
+            is_public=True
+        )
+
+    if not query.exists():
+        raise Http404("Query not found")
+
+    query = query.first()
+
+    tweets = Tweet.objects.filter(query=query, text__icontains=filter_str).order_by('-date')
+
+    if not tweets.exists():
+        # TODO no tweets message to template
+        pass
+
+    tweets_as_csv = [tweet.as_csv() for tweet in tweets]
+    tweets = [tweet.to_dict() for tweet in tweets]
+
+    full_text = ''
+    hashtags = dict()
+    users = set()
+
+    for tweet in tweets:
+        full_text += tweet['text'] + ' '
+        for ht in tweet['hashtags'].split():
+            if ht not in hashtags:
+                hashtags[ht] = 0
+            hashtags[ht] += 1
+        users.add(tweet['user'])
+
+    tb = TextBlob(full_text)
+
+    keywords = query.all_words + ' ' + query.any_word + ' ' + query.phrase + ' ' + query.users + ' ' + query.hashtags
+    keywords = keywords.strip()
+
+    word_counts = sorted(zip(tb.word_counts.values(), tb.word_counts.keys()), reverse=True)
+    word_counts = word_counts[:int(len(word_counts) * 0.3)]
+
+    word_counts = [(c, w) for c, w in word_counts if len(w) >= 3]
+
+    hashtag_counts = sorted(zip(hashtags.values(), hashtags.keys()), reverse=True)
+
+    analysis = {
+        'word_counts': word_counts,
+        'hashtags': hashtag_counts,
+        'users': list(users),
+        'keywords': keywords
+    }
+
+    context = {
+        'analysis': analysis,
+        'tweets': tweets,
+    }
+
+    path = os.path.join(settings.CSV_FILES_ROOT, (query.title.replace(' ', '_')) + ('__' + filter_str))
+
+    with open(path, 'w') as csv:
+        csv.write('\n'.join(tweets_as_csv).encode('utf-8'))
+
+    return render(request, 'queries/filter.html', context)
+
+
+@login_required
+def download_csv(request, query_id, filter_str):
+    """
+
+    :param request:
+    :param query_id:
+    :param filter_str:
+    :return:
+    """
+    try:
+        query_id = int(query_id)
+    except ValueError:
+        raise Http404("Query not found")
+
+    query = Query.objects.filter(user=request.user, pk=query_id)
+    if not query.exists():
+        query = Query.objects.filter(
+            pk=query_id,
+            user__account__group=request.user.account.group,
+            is_public=True
+        )
+
+    if not query.exists():
+        raise Http404("Query not found")
+
+    query = query.first()
+
+    path = os.path.join(settings.CSV_FILES_ROOT, (query.title.replace(' ', '_')) + ('__' + filter_str))
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="{}"'.format(
+        (query.title.replace(' ', '_')) + ('__' + filter_str))
+
+    with open(path) as csv:
+        response.write(csv.read())
+
+    return response

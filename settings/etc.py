@@ -1,7 +1,10 @@
+# coding=utf-8
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+CSV_FILES_ROOT = os.path.join(BASE_DIR, 'csv')
 
 SECRET_KEY = '8d%r=8-0xc-*l8-r0dm^x##jn$loc_g&o(8*j61%jcs+*)uvs^'
 

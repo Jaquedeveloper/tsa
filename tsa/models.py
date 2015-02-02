@@ -25,3 +25,8 @@ class Tweet(models.Model):
             'id': self.tweet_id,
             'polarity': round(self.polarity, 2)
         }
+
+    def as_csv(self):
+        data = [self.tweet_id, '\"' + self.text + '\"', self.date.strftime('%Y-%m-%d %H:%M:%S'), self.hashtags,
+                self.twitter_user, round(self.polarity, 2)]
+        return ','.join(unicode(value) for value in data)

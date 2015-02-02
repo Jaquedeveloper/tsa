@@ -1,14 +1,18 @@
-__author__ = 'joker'
+# coding=utf-8
+
+from django import template
 
 from accounts.models import User
-from django import template
+
+
 register = template.Library()
+
 
 @register.simple_tag(takes_context=True)
 def active(context, tab_name):
     if not context:
         return ''
-    if context['active_tab'] == str(tab_name):
+    if context.get('active_tab') == str(tab_name):
         return 'current'
 
 

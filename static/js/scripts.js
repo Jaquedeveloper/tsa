@@ -4,7 +4,7 @@ var taskGetResults = null;
 var five_seconds = 5000;
 var editing = false;
 var editId = null;
-
+var runningQueryId = null;
 
 function getMessage(msg, type, id, close_button) {
     var notice = $('<div>', {
@@ -139,6 +139,7 @@ function lnkDeleteQueryClickHandler() {
         function (response) {
             notify(response);
             if (response.status == 'success') {
+                runningQueryId = null;
                 $("#q" + id).remove();
             }
         }
@@ -158,7 +159,8 @@ function lnkRunQueryClickHandler() {
         function (response) {
             notify(response);
             if (response.status == 'success') {
-                taskGetResults = createTask(getQueryResults, five_seconds, id);
+                runningQueryId = id;
+                taskGetResults = createTask(getQueryResults, five_seconds, runningQueryId);
                 $("#waiting").show();
                 $("#nq").hide();
                 linkRun.hide();
@@ -205,6 +207,7 @@ function getMyQueries() {
                 // very strange, this way works, but $("a.run-query#" + id) not
                 $("a.run-query[id=" + id + "]").hide();
                 $("a.stop-query[id=" + id + "]").show();
+                runningQueryId = id;
                 if (!taskGetResults)
                     taskGetResults = createTask(getQueryResults, five_seconds, id);
                 $("#tweets").html('<div id="waiting" style="display: none"><img src="/static/images/ajax-loader.gif" alt="loading" /><h6>Waiting for tweets, one moment please</h6></div>');
@@ -225,6 +228,7 @@ function getGroupQueries() {
             }
             if (data.running_query_id) {
                 var id = data.running_query_id;
+                runningQueryId = id;
                 // very strange, this way works, but $("a.run-query#" + id) not
                 $("a.run-query[id=" + id + "]").hide();
                 $("a.stop-query#" + id).show();
@@ -552,7 +556,8 @@ function getQueryResults(id) {
         function (response) {
             if (response.status == 'success') {
                 renderTweets(response.tweets);
-                displayStatistics(response.analysis)
+                displayStatistics(response.analysis);
+                runningQueryId = id;
             } else {
                 notify(response)
             }
@@ -655,12 +660,28 @@ function lnkRemoveUserFromGroupClickHandler() {
             user_id: id
         },
         function (response) {
+            notify(response);
             if (response.status == 'success') {
                 getGroupQueries();
                 linkRemove.parent().parent().remove();
             }
         }
     );
+    return false;
+}
+
+function btnFilterClickHandler() {
+    if (!runningQueryId) return false;
+    var ftf = $("#filter-text");
+    ftf.removeClass("error");
+    var filterText = ftf.val();
+
+    if (!filterText) {
+        ftf.addClass("error");
+        return false;
+    }
+
+    window.location.href = host + '/queries/filter/' + runningQueryId + "/" + filterText + "/";
     return false;
 }
 

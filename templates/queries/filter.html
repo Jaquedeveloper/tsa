@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Filter | Twitter Sentiment Analysis{% endblock %}
+
+{% block header %}{{ block.super }}{% endblock %}
+
+{% block content %}
+    <div id="status-message">
+
+    </div>
+    <div id="dashboard">
+        {% autoescape off %}
+
+
+
+            <div id="my_dashboard" class="tab-content">
+                <div id="results">
+                    <div id="tweets">
+                        {% for tweet in tweets %}
+                            <div class="tweet">
+                                <div class="tweet-title">
+                                    <div class="tweet-posted-by">Posted by: <span
+                                            class="tweet-owner">{{ tweet.user }}</span></div>
+                                    <div class="tweet-date" style="float: right">Since: <span>{{ tweet.date }}</span>
+                                    </div>
+                                </div>
+                                <div class="tweet-body">
+                                    {{ tweet.text }}
+                                    <div class="tweet-polarity"><span>
+                                        {% if tweet.polarity == 0.0 %}
+                                            <i class="fa fa-circle-thin pn">&nbsp;{{ tweet.polarity }}</i>
+                                        {% elif tweet.polarity > 0 %}
+                                            <i class="fa fa-smile-o pp">&nbsp;{{ tweet.polarity }}</i>
+                                        {% else %}
+                                            <i class="fa fa-frown-o png">&nbsp;{{ tweet.polarity }}</i>
+                                        {% endif %}
+                                    </span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div id="statistics">
+                        <h6 style="text-align: center;">Statistics (<a href="csv/">Export tweets to CSV</a>)</h6>
+
+                        <div id="st">
+                            <table>
+                                <tr>
+                                    <th class="top-text">Keywords:</th>
+                                    <td>{{ analysis.keywords }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="top-text">Hashtags:</th>
+                                    <td>
+                                        {% for c,t in analysis.hashtags %}
+                                            #{{ t }}
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="top-text">Users:</th>
+                                    <td>
+                                        {% for u in analysis.users %}
+                                            @{{ u }}&nbsp;&nbsp;
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="top-text">Frequent words:</th>
+                                    <td>
+                                        <table>
+                                            {% for count,word in analysis.word_counts %}
+                                                <tr>
+                                                    <td class="w35pc">{{ word }}</td>
+                                                    <td>{{ count }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endautoescape %}
+    </div>
+
+{% endblock %}
