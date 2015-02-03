@@ -14,7 +14,7 @@ sudo chown tsa /webapps/tsa<br/>
 sudo su - tsa<br/>
 virtualenv .<br/>
 source bin/activate<br/>
-git clone https://github.com/joker-ace/tsa.git<br/>
+git clone https://github.com/saed-alkaabi/tsa.git<br/>
 pip install -r tsa/requirements.txt<br/>
 python -m nltk.downloader all<br/>
 python tsa/manage.py migrate<br/>
