@@ -1,5 +1,5 @@
 var csrf_token = null;
-var host = 'http://' + document.domain + ':8000';
+var host = 'http://' + document.domain;
 var taskGetResults = null;
 var five_seconds = 5000;
 var editing = false;
