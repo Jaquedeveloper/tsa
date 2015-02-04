@@ -9,14 +9,14 @@ class Query(models.Model):
     user = models.ForeignKey(User)
     date = models.DateTimeField(default=datetime.now(), null=False)
     is_public = models.BooleanField(default=False, null=False)
-    all_words = models.CharField(max_length=50, null=True, default=None)
-    phrase = models.CharField(max_length=50, null=True, default=None)
-    any_word = models.CharField(max_length=50, null=True, default=None)
-    none_of = models.CharField(max_length=50, null=True, default=None)
-    hashtags = models.CharField(max_length=100, null=True, default=None)
-    users = models.CharField(max_length=100, null=True, default=None)
-    date_from = models.DateField(null=True, default=None)
-    date_to = models.DateField(null=True, default=None)
+    all_words = models.CharField(max_length=50, null=True, default=None, black=True)
+    phrase = models.CharField(max_length=50, null=True, default=None, black=True)
+    any_word = models.CharField(max_length=50, null=True, default=None, black=True)
+    none_of = models.CharField(max_length=50, null=True, default=None, black=True)
+    hashtags = models.CharField(max_length=100, null=True, default=None, black=True)
+    users = models.CharField(max_length=100, null=True, default=None, black=True)
+    date_from = models.DateField(null=True, default=None, black=True)
+    date_to = models.DateField(null=True, default=None, black=True)
 
     def __unicode__(self):
         return self.title
